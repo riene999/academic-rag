@@ -10,6 +10,7 @@ from loguru import logger
 
 from src.cache.redis_cache import RedisCache, md5_key, redis_enabled
 from src.rag.embedder import Embedder
+from src.storage.sqlite_store import SQLiteDocumentStore
 from src.utils.cache import TTLCache
 from src.utils.pdf_parser import Document
 
@@ -36,8 +37,9 @@ class FAISSRetriever:
         self.dimension = dimension
         self.index_path = Path(index_path)
         self.index_path.mkdir(parents=True, exist_ok=True)
+        self.document_store = SQLiteDocumentStore(self.index_path / "documents.sqlite")
 
-        self.index = faiss.IndexFlatIP(dimension) # 向量库
+        self.index = faiss.IndexFlatIP(dimension)
         self.documents: List[Document] = []
         self.faiss_lock = asyncio.Lock()
 
@@ -88,7 +90,6 @@ class FAISSRetriever:
         return chunks
 
     def _invalidate_result_cache(self) -> None:
-        # 使缓存失效
         if isinstance(self.result_cache, RedisCache) and self.result_cache.using_redis:
             self.result_cache.incr_counter("rag:index_version")
             return
@@ -119,7 +120,6 @@ class FAISSRetriever:
         logger.info("Index size: {}", self.index.ntotal)
 
     def retrieve(self, query: str, top_k: int = 5, score_threshold: float = 0.5) -> List[RetrievedChunk]:
-        # 先检查query缓存->没找到就生成query对应的向量->过滤结果->缓存结果
         if self.index.ntotal == 0:
             logger.warning("Index is empty, add documents first")
             return []
@@ -152,22 +152,38 @@ class FAISSRetriever:
 
     def save(self) -> None:
         faiss.write_index(self.index, str(self.index_path / "index.faiss"))
-        with open(self.index_path / "documents.pkl", "wb") as f:
-            pickle.dump(self.documents, f)
-        logger.info("Saved index to {}", self.index_path)
+        self.document_store.replace_all_documents(self.documents, reason="save")
+        logger.info("Saved index and metadata to {}", self.index_path)
 
     def load(self) -> bool:
         index_file = self.index_path / "index.faiss"
-        docs_file = self.index_path / "documents.pkl"
+        legacy_docs_file = self.index_path / "documents.pkl"
 
-        if not index_file.exists() or not docs_file.exists():
+        if not index_file.exists():
             logger.info("No existing index found, starting fresh")
             return False
 
         self.index = faiss.read_index(str(index_file))
-        with open(docs_file, "rb") as f:
-            self.documents = pickle.load(f)
+        if self.document_store.has_chunks():
+            self.documents = self.document_store.load_documents()
+        elif legacy_docs_file.exists():
+            with open(legacy_docs_file, "rb") as f:
+                self.documents = pickle.load(f)
+            self.document_store.replace_all_documents(self.documents, reason="migrate_pickle")
+            logger.info("Migrated {} chunks from documents.pkl to SQLite", len(self.documents))
+        else:
+            self.documents = []
+            logger.warning("Index file exists but no document metadata was found")
 
         self._clear_result_cache()
+        if self.index.ntotal != len(self.documents):
+            logger.warning(
+                "Index/document count mismatch: vectors={}, documents={}",
+                self.index.ntotal,
+                len(self.documents),
+            )
         logger.info("Loaded index successfully, total vectors={}", self.index.ntotal)
         return True
+
+    def list_documents(self) -> list[dict]:
+        return self.document_store.list_documents()

@@ -3,7 +3,6 @@
 面试要点：统一配置管理，支持环境变量覆盖，方便部署
 """
 import os
-from openai import api_key
 import yaml
 from pathlib import Path
 from dataclasses import dataclass
