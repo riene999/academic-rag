@@ -1,6 +1,6 @@
 llm:
   provider: deepseek
-  api_key: sk-e21f1c47104c49a7a528f3de145216a0
+  api_key: 
   base_url: https://api.deepseek.com
   model: deepseek-chat
   temperature: 0.3
