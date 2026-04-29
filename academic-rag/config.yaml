@@ -1,6 +1,6 @@
 ﻿llm:
   provider: "deepseek"
-  api_key: "" # Prefer setting env var LLM_API_KEY
+  api_key: null 
   base_url: "https://api.deepseek.com"
   model: "deepseek-chat"
   temperature: 0.3

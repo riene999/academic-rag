@@ -3,6 +3,7 @@
 面试要点：统一配置管理，支持环境变量覆盖，方便部署
 """
 import os
+from openai import api_key
 import yaml
 from pathlib import Path
 from dataclasses import dataclass
@@ -90,15 +91,13 @@ class AppConfig:
 
 
 def load_config(config_path: str = "config.yaml") -> AppConfig:
-    """
-    加载配置文件，支持环境变量覆盖API Key
-    生产环境中API Key不应写在配置文件中，用环境变量注入
-    """
     with open(config_path, "r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
 
-    # 支持环境变量覆盖API Key（生产最佳实践）
-    api_key = os.environ.get("LLM_API_KEY", raw["llm"]["api_key"])
+    api_key = os.environ.get("DS_API_KEY")
+    if not api_key:
+        raise RuntimeError("DS_API_KEY environment variable is required")
+
     embedding_cache = raw["embedding"].get(
         "cache",
         raw["embedding"].get("query_cache", {}),
