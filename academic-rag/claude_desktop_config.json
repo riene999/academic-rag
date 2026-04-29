@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "academic-rag": {
+      "command": "python",
+      "args": [
+        "-m",
+        "src.mcp.server"
+      ],
+      "cwd": "D:\\Code\\academic-rag\\academic-rag"
+    }
+  }
+}

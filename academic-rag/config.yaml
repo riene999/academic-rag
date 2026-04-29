@@ -1,0 +1,64 @@
+﻿llm:
+  provider: "deepseek"
+  api_key: "" # Prefer setting env var LLM_API_KEY
+  base_url: "https://api.deepseek.com"
+  model: "deepseek-chat"
+  temperature: 0.3
+  max_tokens: 2048
+  citation_check:
+    enabled: true
+    retries: 1
+    model: "deepseek-chat"
+
+embedding:
+  model: "BAAI/bge-small-en-v1.5"
+  device: "cpu"
+  batch_size: 32
+  query_cache:
+    enabled: true
+    max_size: 10000
+    ttl_seconds: 1800
+
+retrieval:
+  top_k: 5
+  score_threshold: 0.5
+  chunk_size: 512
+  chunk_overlap: 64
+  query_decomposition:
+    enabled: true
+    max_subquestions: 3
+  result_cache:
+    enabled: true
+    max_size: 5000
+    ttl_seconds: 900
+
+vector_store:
+  index_path: "./data/faiss_index"
+  dimension: 384
+
+reranker:
+  enabled: false
+  model: "BAAI/bge-reranker-base"
+  device: "cpu"
+  batch_size: 16
+  candidate_top_k: 20
+
+bm25:
+  enabled: true
+  top_k: 20
+  k1: 1.5
+  b: 0.75
+  rrf_k: 60
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: null
+  socket_timeout: 1.0
+  socket_connect_timeout: 1.0
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true

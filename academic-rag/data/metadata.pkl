@@ -1,0 +1,1376 @@
+[
+  {
+    "text": "Published as a conference paper at ICLR 2026\nUNIFIED ANALYSES FOR HIERARCHICAL FEDERATED\nLEARNING:\nTOPOLOGY SELECTION\nUNDER DATA\nHETEROGENEITY\nZiyi Zhou1, Yipeng Li2 & Xinchen Lyu1∗\n1National Engineering Research Center for Mobile Network Technologies,\nBeijing University of Posts and Telecommunications\n2Tsinghua Shenzhen International Graduate School, Tsinghua University\n{zhouzy0821, lvxinchen}@bupt.edu.cn, liyp25@mails.tsinghua.edu.cn\nABSTRACT",
+    "source": "iclr_2026.pdf",
+    "page": 1,
+    "chunk_id": 0
+  },
+  {
+    "text": "1, lvxinchen}@bupt.edu.cn, liyp25@mails.tsinghua.edu.cn\nABSTRACT1, lvxinchen}@bupt.edu.cn, liyp25@mails.tsinghua.edu.cn\nABSTRACTHierarchical Federated Learning (HFL) addresses critical scalability limitations\nin conventional federated learning by incorporating intermediate aggregation lay-\ners, yet optimal topology selection across varying data heterogeneity conditions\nand network conditions remains an open challenge. This paper establishes the\nfirst unified convergence framework for all four HFL topologies (Star-Star, Star-\nRing, Ring-Star, and Ring-Ring) with full/partial client participation under non-",
+    "source": "iclr_2026.pdf",
+    "page": 1,
+    "chunk_id": 1
+  },
+  {
+    "text": "and Ring-Ring) with full/partial client participation under non-and Ring-Ring) with full/partial client participation under non-convex objectives and different intra/inter-group data heterogeneity. Our theo-\nretical analysis reveals three fundamental principles for topology selection: (1)\nThe top-tier aggregation topology exerts greater influence on convergence than\nthe intra-group topology, with ring-based top-tier configurations generally outper-\nforming star-based alternatives; (2) Optimal topology strongly depends on client\ngrouping characteristics, where Ring-Star excels with numerous small groups",
+    "source": "iclr_2026.pdf",
+    "page": 1,
+    "chunk_id": 2
+  },
+  {
+    "text": "aracteristics, where Ring-Star excels with numerous small groupsaracteristics, where Ring-Star excels with numerous small groupswhile Star-Ring is superior for large, client-dense clusters; and (3) Inter-group\nheterogeneity dominates convergence dynamics across all topologies, necessitat-\ning clustering strategies that minimize inter-group divergence. Extensive exper-\niments on CIFAR-10/CINIC-10/Fashion-MNIST/SST-2 with ResNet-18/VGG-\n9/ResNet-10/MLP validate these insights, and provide practitioners with theoreti-\ncally grounded guidance for HFL system design in real-world deployments.\n1\nINTRODUCTION",
+    "source": "iclr_2026.pdf",
+    "page": 1,
+    "chunk_id": 3
+  },
+  {
+    "text": "for HFL system design in real-world deployments.\n1\nINTRODUCTION for HFL system design in real-world deployments.\n1\nINTRODUCTIONFederated Learning (FL) (McMahan et al., 2017) has revolutionized collaborative machine learning\nby enabling distributed model training across decentralized devices while preserving data privacy.\nHowever, conventional single-tier FL faces critical scalability challenges in large-scale deployments,\nincluding communication bottlenecks, synchronization latency, and vulnerability to single-point\nfailures. Hierarchical Federated Learning (HFL) (Liu et al., 2020) has emerged as a promising",
+    "source": "iclr_2026.pdf",
+    "page": 1,
+    "chunk_id": 4
+  },
+  {
+    "text": "ted Learning (HFL) (Liu et al., 2020) has emerged as a promisingted Learning (HFL) (Liu et al., 2020) has emerged as a promisingparadigm, introducing intermediate aggregation layers (such as edge servers or cluster heads) to\nform a two/multi-tier architecture that distributes the coordination burden for massive deployment.\nDespite its promise, the theoretical understanding of HFL remains nascent, particularly under real-\nistic conditions of data heterogeneity and diverse hierarchical topologies.\nIn two-tier HFL frameworks, each level of aggregation can be performed via parallel updates (star",
+    "source": "iclr_2026.pdf",
+    "page": 1,
+    "chunk_id": 5
+  },
+  {
+    "text": "level of aggregation can be performed via parallel updates (starlevel of aggregation can be performed via parallel updates (startopology) or sequential updates (ring topology), yielding four distinct configurations: Star-Star,\nStar-Ring, Ring-Star, and Ring-Ring (see Figure 1). These topological choices fundamentally in-\nfluence the convergence dynamics, robustness to data heterogeneity, and communication efficiency.\nFor instance, star aggregation enables parallel client updates but may suffer from abrupt synchro-\nnization of divergent models, while ring updates propagate sequentially, potentially mitigating client",
+    "source": "iclr_2026.pdf",
+    "page": 1,
+    "chunk_id": 6
+  },
+  {
+    "text": "ng updates propagate sequentially, potentially mitigating clientng updates propagate sequentially, potentially mitigating clientdrift in non-IID settings (Li & Lyu, 2023; 2025).\nLiterature Review. Existing theoretical analyses of HFL have largely focused on the Star-Star\ntopology on non-convex functions (Zhou & Cong, 2019; Castiglia et al., 2021; Wang et al., 2022),\n∗Xinchen Lyu is the corresponding author.\n1",
+    "source": "iclr_2026.pdf",
+    "page": 1,
+    "chunk_id": 7
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\ndata heterogeneity (Wang et al., 2022), partial client participation (Jiang & Zhu, 2024), and other\nvariants (Liu et al., 2022; Yang et al., 2023). Some recent works explore Star-Ring topology (Chen\net al., 2020; Lee et al., 2020; Fang et al., 2022; Ding et al., 2024) and the Ring-Star topology\n(Chaoyang et al., 2020; Huang et al., 2024; Yan et al., 2025). However, a unified convergence",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 0
+  },
+  {
+    "text": "et al., 2024; Yan et al., 2025). However, a unified convergence et al., 2024; Yan et al., 2025). However, a unified convergenceanalysis that compares all four topologies is still lacking. This theoretical gap impedes informed\ntopology selection in practical deployments, where system performance is highly sensitive to data\ndistribution and network conditions.\n(a) Star-Star HFL\n(b) Star-Ring HFL\n(c) Ring-Star HFL\n(d) Ring-Ring HFL\nFigure 1: Different topology configurations of HFL\nResearch Question. The central research problem is:\nHow should practitioners select the optimal HFL topology configuration when facing varying de-",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 1
+  },
+  {
+    "text": "t the optimal HFL topology configuration when facing varying de-t the optimal HFL topology configuration when facing varying de-grees of intra-group and inter-group data heterogeneity, diverse client grouping characteristics, and\nconstrained network conditions?\nThis research problem is of practical importance for system convergence. For example, in systems\nwith high inter-group heterogeneity (such as clients clustered by geographic region with distinct data\ndistributions), selecting star topology at the top tier may amplify inter-group divergence through",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 2
+  },
+  {
+    "text": "ology at the top tier may amplify inter-group divergence throughology at the top tier may amplify inter-group divergence throughabrupt parallel synchronization. Conversely, ring aggregation at the top tier enables gradual, se-\nquential alignment that may better accommodate distributional differences. This topology selection\nproblem is further complicated when considering diverse client grouping characteristics in HFL.\nAnalytical Challenges. Establishing a comprehensive convergence framework for HFL that encom-\npasses all four topology configurations presents three critical challenges:",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 3
+  },
+  {
+    "text": "four topology configurations presents three critical challenges:four topology configurations presents three critical challenges:(1) Hierarchical Heterogeneity Interdependence. Unlike single-tier FL, HFL exhibits a cascading\nheterogeneity relationship where intra-group and inter-group data distributions interact in non-trivial\nways. This creates a feedback loop where local model divergence within groups directly exacerbates\nglobal model inconsistency. The convergence bounds must account for the multiplicative interaction\nbetween intra/inter-group divergence.",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 4
+  },
+  {
+    "text": "multiplicative interaction\nbetween intra/inter-group divergence.multiplicative interaction\nbetween intra/inter-group divergence.(2) Cross-Tier Dynamic Coupling. The two-tier aggregation architecture creates a bidirectional de-\npendency where updates at one tier directly influence the error propagation at the other tier. The\neffective learning rate at one tier depends on accumulated errors from the other tier, invalidating\nsequential single-tier analysis approaches.\n(3) Compounded Topology-Specific Biases. Different topologies introduce distinct statistical prop-",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 5
+  },
+  {
+    "text": "iases. Different topologies introduce distinct statistical prop-iases. Different topologies introduce distinct statistical prop-erties that compound across hierarchical layers in topology-dependent ways. Star and ring topolo-\ngies introduce fundamentally different statistical properties (unbiased high-variance updates versus\nbiased low-variance sequential updates) that compound across hierarchical layers. Such topology-\nspecific error propagation patterns require sophisticated cross-client error term analysis that explic-\nitly tracks how topology choices modulate bias-variance tradeoffs across hierarchical layers.",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 6
+  },
+  {
+    "text": "ces modulate bias-variance tradeoffs across hierarchical layers.ces modulate bias-variance tradeoffs across hierarchical layers.Contributions. This paper establishes a unified theoretical framework for analyzing and comparing\nall four HFL topology configurations (Star-Star, Star-Ring, Ring-Star, and Ring-Ring) under non-\nconvex optimization and varying data heterogeneity conditions (see Theorem 1 and Table 1). Our\nconvergence bounds explicitly quantify the effects of key system parameters, including number of\ngroups (G), clients per group (M), local steps (K), and group rounds (P), and reveal how topology",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 7
+  },
+  {
+    "text": ", local steps (K), and group rounds (P), and reveal how topology, local steps (K), and group rounds (P), and reveal how topologychoices interact with intra/inter-group heterogeneity to shape convergence behavior. The frame-\nwork extends to partial client participation settings with corresponding convergence guarantees (see\nTheorem 2). Our analysis yields three insights for HFL system design:\n2",
+    "source": "iclr_2026.pdf",
+    "page": 2,
+    "chunk_id": 8
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nTable 1: Comparison of convergence rates under full participation. We omit constants and polylog-\narithmic factors. Notation: R (global rounds); G (groups); P (group rounds); M (clients/group); K\n(local steps); σ (variance); δ, ζ (inter/intra-heterogeneity); L (smoothness).\nTopology\nConvergence Rate1\nPFL\n(Koloskova et al., 2020)2\nL1/2σ\n√\nMKR + L2/3σ2/3\n(KR2)\n1\n3 + L2/3δ2/3\n(R2)\n1\n3\nSFL\n(Li & Lyu, 2023)\nL1/2σ\n√\nMKR +\nL2/3σ2/3\n(MKR2)\n1\n3 + L2/3δ2/3\n(R2)\n1\n3",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 0
+  },
+  {
+    "text": "Lyu, 2023)\nL1/2σ\n√\nMKR +\nL2/3σ2/3\n(MKR2)\n1\n3 + L2/3δ2/3\n(R2)\n1\n3Lyu, 2023)\nL1/2σ\n√\nMKR +\nL2/3σ2/3\n(MKR2)\n1\n3 + L2/3δ2/3\n(R2)\n1\n3Star-Star Theorem 1\nL1/2σ\n√\nGP MKR +\nL2/3σ2/3\n(P 2KR2)\n1\n3 +\nL2/3σ2/3\n(P MKR2)\n1\n3 + L2/3ζ2/3\n(P 2R2)\n1\n3 + L2/3δ2/3\n(R2)\n1\n3\n(Wang et al., 2022)\nL1/2σ\n√\nGP MKR +\nL2/3σ2/3\n(P 2KR2)\n1\n3 +\nL2/3σ2/3\n(P MKR2)\n1\n3 + L2/3ζ2/3\n(P 2R2)\n1\n3 + L2/3δ2/3\n(R2)\n1\n3\nStar-Ring3 Theorem 1\nL1/2σ\n√\nGP MKR +\nL2/3σ2/3\n(P MKR2)\n1\n3 + L2/3ζ2/3\n(P 2R2)\n1\n3 + L2/3δ2/3\n(R2)\n1\n3\nRing-Star3 Theorem 1\nL1/2σ\n√\nGP MKR+\nL2/3σ2/3\n(G2P 2KR2)\n1\n3 +\nL2/3σ2/3\n(GP MKR2)\n1\n3 +\nL2/3ζ2/3\n(G2P 2R2)\n1\n3 +L2/3δ2/3\n(R2)\n1\n3\nRing-Ring Theorem 1\nL1/2σ\n√",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 1
+  },
+  {
+    "text": "2/3\n(G2P 2R2)\n1\n3 +L2/3δ2/3\n(R2)\n1\n3\nRing-Ring Theorem 1\nL1/2σ\n√2/3\n(G2P 2R2)\n1\n3 +L2/3δ2/3\n(R2)\n1\n3\nRing-Ring Theorem 1\nL1/2σ\n√GP MKR +\nL2/3σ2/3\n(GP MKR2)\n1\n3 +\nL2/3ζ2/3\n(G2P 2R2)\n1\n3 + L2/3δ2/3\n(R2)\n1\n3\n1 Terms highlighted in color, e.g., G and G2, denote the additional denominator terms introduced by the top-\nlevel Ring topology (i.e., Ring-Star vs. Star-Star, Ring-Ring vs. Star-Ring).\n2 FedAvg, non-IID, non-convex. If there is only one client in each group (i.e., P = 1, M = 1 and ζ = 0),\nStar-Star reduces to FedAvg. In this case, our rate becomes O\n\u0000 L1/2σ\n√\nMKR + L2/3σ2/3\n(KR2)1/3 + L2/3δ2/3\n(R2)1/3\n\u0001\nwhich matches",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 2
+  },
+  {
+    "text": "/2σ\n√\nMKR + L2/3σ2/3\n(KR2)1/3 + L2/3δ2/3\n(R2)1/3\n\u0001\nwhich matches/2σ\n√\nMKR + L2/3σ2/3\n(KR2)1/3 + L2/3δ2/3\n(R2)1/3\n\u0001\nwhich matchesthat of FedAvg.\n3 Even though similar algorithms and some preliminary convergence analyses have been studied, the advanced\nconvergence analyses are still missing for Star-Ring and Ring-Star. For example, Chen et al. (2020) and Yan\net al. (2025) used the bounded gradient assumption, meaning the stochastic gradient is uniformly bounded by a\nconstant.\n(1) HFL prioritizes scalability over convergence acceleration. Counterintuitively, HFL is primarily",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 3
+  },
+  {
+    "text": "r convergence acceleration. Counterintuitively, HFL is primarilyr convergence acceleration. Counterintuitively, HFL is primarilyvaluable for enabling large-scale deployments where single-tier FL becomes impractical, rather than\ninherently accelerating convergence. Crucially, HFL with ring aggregation at the top tier (Ring-Star,\nRing-Ring) consistently outperforms star-based counterparts under data heterogeneity. This reveals\nthat carefully selected single-tier FL configurations may actually converge faster than two-tier HFL,\npositioning HFL as a solution for scalability constraints rather than a convergence accelerator.",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 4
+  },
+  {
+    "text": "r scalability constraints rather than a convergence accelerator.r scalability constraints rather than a convergence accelerator.(2) Inter-group heterogeneity dominates convergence dynamics. We establish that inter-group data\ndivergence (δ) exerts a more significant impact on convergence than intra-group heterogeneity (ζ)\nacross all four topologies. This finding fundamentally reshapes client clustering strategies, indicat-\ning that minimizing inter-group distributional differences should take precedence over optimizing\nintra-group homogeneity. Effective grouping, such as forming clusters with approximately IID inter-",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 5
+  },
+  {
+    "text": "grouping, such as forming clusters with approximately IID inter-grouping, such as forming clusters with approximately IID inter-group distributions, would converge faster than fine-tuning intra-group training dynamics.\n(3) Optimal topology selection depends critically on group structure. Our analysis reveals optimal\ntopology selection depends critically on group structure. Ring-Star excels when numerous small\ngroups exist, as sequential inter-group updates benefit from increased parallelism at the lower tier\nand fine-grained global alignment. Star-Ring is preferable for few large, client-dense clusters, where",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 6
+  },
+  {
+    "text": "r-Ring is preferable for few large, client-dense clusters, wherer-Ring is preferable for few large, client-dense clusters, whereintra-group ring aggregation enables deep local refinement before global synchronization.\nWe validate these theoretical insights through extensive experiments using ResNet-18/VGG-9 on\nCIFAR-10, ResNet-18 on CINIC-10, ResNet-10 on Fashion-MNIST, and MLP on SST-2 under four\ndistinct heterogeneity scenarios. The results consistently demonstrate accuracy gains from informed\ntopology selection, with ring-based top-tier configurations showing particular advantages in hetero-",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 7
+  },
+  {
+    "text": "top-tier configurations showing particular advantages in hetero-top-tier configurations showing particular advantages in hetero-geneous environments. Beyond establishing the first convergence analysis for the previously unstud-\nied Ring-Ring topology, our framework overcomes critical limitations of prior work by: (i) adopting\nconsistent, general non-convex assumptions across all topologies, whereas previous studies relied on\n3",
+    "source": "iclr_2026.pdf",
+    "page": 3,
+    "chunk_id": 8
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nheterogeneous assumptions that prevented direct comparison; and (ii) deriving tighter convergence\nbounds of O(1/\n√\nGPMKR) for Star-Ring and Ring-Star topologies, versus O(1/\n√\nR) in prior\nliterature (Lee et al., 2020; Yan et al., 2025). These contributions provide system designers with\ntheoretically grounded principles for topology selection based on specific deployment constraints.\n2\nCONVERGENCE THEORY",
+    "source": "iclr_2026.pdf",
+    "page": 4,
+    "chunk_id": 0
+  },
+  {
+    "text": "n based on specific deployment constraints.\n2\nCONVERGENCE THEORYn based on specific deployment constraints.\n2\nCONVERGENCE THEORYThis section presents a unified convergence analysis of HFL under non-convex optimization objec-\ntives. In the following, we formalize the setup of HFL with four different topologies, introduce\ngeneral assumptions, derive the convergence bounds, and extract actionable insights for topology\nselection in practical deployments.\n2.1\nSETUP\nWe begin by formalizing the HFL framework and the update mechanisms for each topology config-\nuration. In two-tier HFL, the global objective is to minimize:\nmin\nx∈Rd\n(",
+    "source": "iclr_2026.pdf",
+    "page": 4,
+    "chunk_id": 1
+  },
+  {
+    "text": "In two-tier HFL, the global objective is to minimize:\nmin\nx∈Rd\n(In two-tier HFL, the global objective is to minimize:\nmin\nx∈Rd\n(F(x) = 1\nG\nG\nX\ng=1\nFg(x) = 1\nG\nG\nX\ng=1\n1\nM\nM\nX\nm=1\nFg,m(x)\n)\n(1)\nwhere Fg denotes the average local objective function over all clients in group g (g ∈[G]), and Fg,m\ndenotes the local objective function of client m (m ∈[M]) in group g. Specifically, it is defined as\nFg,m(x) = Eξ∼Dm[fm(x; ξ)], where Dm is the local dataset of client m.\nIn the full participation setting, the HFL process with four topology configurations operates accord-\ning to distinct update rules:",
+    "source": "iclr_2026.pdf",
+    "page": 4,
+    "chunk_id": 2
+  },
+  {
+    "text": "gy configurations operates accord-\ning to distinct update rules:gy configurations operates accord-\ning to distinct update rules:(1) Star-Star. Each group g initializes its model as x(r)\ng,0 = x(r). Within each group, clients initialize\ntheir models as x(r)\ng,p,m,0 = x(r)\ng,p, perform K parallel local updates, and send updates to the group\nserver for aggregation. After P group updates, the global server aggregates group parameters to\ngenerate the next global parameters x(r+1).\n(2) Star-Ring. Each group g initializes its model as x(r)\ng,0 = x(r). Within each group, clients initialize",
+    "source": "iclr_2026.pdf",
+    "page": 4,
+    "chunk_id": 3
+  },
+  {
+    "text": "model as x(r)\ng,0 = x(r). Within each group, clients initialize model as x(r)\ng,0 = x(r). Within each group, clients initializetheir models from the previous client in sequence and perform K local updates. The group server\nreceives the latest parameters from the last client. After P group updates, group servers send their\nupdated parameters to the global server for aggregation.\n(3) Ring-Star. Each group g initializes its model with the latest parameters from the previous group.\nWithin each group, clients initialize their models as x(r)\ng,p,m,0 = x(r)\ng,p, perform K parallel local",
+    "source": "iclr_2026.pdf",
+    "page": 4,
+    "chunk_id": 4
+  },
+  {
+    "text": "heir models as x(r)\ng,p,m,0 = x(r)\ng,p, perform K parallel localheir models as x(r)\ng,p,m,0 = x(r)\ng,p, perform K parallel localupdates, and send updates to the group server for aggregation. After P group updates, group servers\nsend their updated parameters to the next group in sequence.\n(4) Ring-Ring. Each group g initializes its model with the latest parameters from the previous group.\nWithin each group, clients initialize their models from the previous client and perform K local\nupdates. The group server aggregates the latest parameters from the last client. After P group",
+    "source": "iclr_2026.pdf",
+    "page": 4,
+    "chunk_id": 5
+  },
+  {
+    "text": "egates the latest parameters from the last client. After P groupegates the latest parameters from the last client. After P groupupdates, group servers send their updated parameters to the next group in sequence.\nCrucially, for ring-based topologies, we distinguish two cases: (i) under full participation, the exe-\ncution sequence is fixed (see Appendix A.1); and (ii) under partial participation (where S1 groups\nand S2 clients are active), the execution sequence is random.\n2.2\nASSUMPTIONS\nAssumption 1 (L-Smoothness). Each local objective function Fg,m is L-smooth, i.e., there exists",
+    "source": "iclr_2026.pdf",
+    "page": 4,
+    "chunk_id": 6
+  },
+  {
+    "text": "ch local objective function Fg,m is L-smooth, i.e., there existsch local objective function Fg,m is L-smooth, i.e., there existsone constant L such that ∥∇Fg,m(x) −∇Fg,m(y)∥≤L∥x −y∥, for all g ∈{1, . . . , G}, m ∈\n{1, . . . , M}, and x, y ∈Rd.\nAssumption 2 (Bounded variance). For the local objective function Fg,m, the stochastic gradient\n∇Fg,m(x, ξ) computed using a mini-batch ξ, sampled from local dataset Dg,m, is an unbiased\n4",
+    "source": "iclr_2026.pdf",
+    "page": 4,
+    "chunk_id": 7
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nestimate, i.e., Eξ∼Dg,m[∇Fg,m(x, ξ)] = ∇Fg,m(x). The variance of the stochastic gradient at each\nclient is bounded: Eξ∼Dg,m[∥∇Fg,m(x, ξ) −∇Fg,m(x)∥2] ≤σ2.\nAssumption 3 (Bounded Inter-Group Heterogeneity). There exists one constant δ2 such that\n1\nG\nPG\ng=1 ∥∇F(x) −∇Fg(x)∥2 ≤δ2.\n(2)\nAssumption 4 (Bounded Intra-Group Heterogeneity). For any g ∈{1, 2, . . . , G}, there exist con-\nstants ζ2\ng such that\n1\nM\nPM\nm=1 ∥∇Fg,m(x) −∇Fg(x)∥2 ≤ζ2\ng.\n(3)",
+    "source": "iclr_2026.pdf",
+    "page": 5,
+    "chunk_id": 0
+  },
+  {
+    "text": "stants ζ2\ng such that\n1\nM\nPM\nm=1 ∥∇Fg,m(x) −∇Fg(x)∥2 ≤ζ2\ng.\n(3)\nstants ζ2\ng such that\n1\nM\nPM\nm=1 ∥∇Fg,m(x) −∇Fg(x)∥2 ≤ζ2\ng.\n(3)Furthermore, we define the average intra-group heterogeneity as ζ2 := 1\nG\nPG\ng=1 ζ2\ng.\nThe first two assumptions are standard in non-convex optimization (Ghadimi & Lan, 2013; Bot-\ntou et al., 2018). Assumptions 3 and 4 extend standard FL analysis to the hierarchical setting,\nexplicitly bounding inter- and intra-group data heterogeneity (Wang & Ji, 2022).\nNotably, the\nglobal heterogeneity can be naturally decomposed into the inter-group and intra-group terms defined\nabove. Specifically, we have: 1\nG\nPG\ng=1\n1",
+    "source": "iclr_2026.pdf",
+    "page": 5,
+    "chunk_id": 1
+  },
+  {
+    "text": "a-group terms defined\nabove. Specifically, we have: 1\nG\nPG\ng=1\n1a-group terms defined\nabove. Specifically, we have: 1\nG\nPG\ng=1\n1M\nPM\nm=1 ∥∇Fg,m(x) −∇F(x)∥2 = 1\nG\nPG\ng=1 ∥∇Fg(x) −\n∇F(x)∥2 + 1\nG\nPG\ng=1\n1\nM\nPM\nm=1 ∥∇Fg,m(x)−∇Fg(x)∥2. This equality is an implementation of the\nlaw of total variance. This shows that inter- and intra-group heterogeneity are, in fact, a partition of\nthe global heterogeneity.\n2.3\nCONVERGENCE ANALYSIS\nTheorem 1. (Convergence with Full Participation). Let A = F(x(0)) −F ∗denote the initial opti-\nmality gap. Here ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous",
+    "source": "iclr_2026.pdf",
+    "page": 5,
+    "chunk_id": 2
+  },
+  {
+    "text": "odel uniformly sampled from the x(0), . . . , x(R−1) of previousodel uniformly sampled from the x(0), . . . , x(R−1) of previousiterations, and ≲hides universal constants. Under Assumptions 2–4, the following convergence\nbounds hold for each HFL topology.\nStar-Star: There exist ˜η = PKη, and ˜η ≤\n1\n√\n30L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nGPMK + L2˜η2σ2\nP 2K\n+ L2˜η2σ2\nPMK + L2˜η2ζ2\nP 2\n+ L2˜η2δ2.\n(4)\nStar-Ring: There exist ˜η = PMKη, and ˜η ≤\n1\n√\n60L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nGPMK + L2˜η2σ2\nPMK + L2˜η2ζ2\nP 2\n+ L2˜η2δ2.\n(5)\nRing-Star: There exist ˜η = GPKη, and ˜η ≤\n1\n√\n60L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +",
+    "source": "iclr_2026.pdf",
+    "page": 5,
+    "chunk_id": 3
+  },
+  {
+    "text": "˜η = GPKη, and ˜η ≤\n1\n√\n60L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR + ˜η = GPKη, and ˜η ≤\n1\n√\n60L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +L˜ησ2\nGPMK + L2˜η2σ2\nG2P 2K + L2˜η2σ2\nGPMK + L2˜η2ζ2\nG2P 2 + L2˜η2δ2.\n(6)\nRing-Ring: There exist ˜η = GPMKη, and ˜η ≤\n1\n10L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nGPMK + L2˜η2σ2\nGPMK + L2˜η2ζ2\nG2P 2 + L2˜η2δ2.\n(7)\nTheorem 2. (Convergence with Partial Participation). Under Assumptions 2–4, where in each\nglobal round, a subset of S1 groups are sampled uniformly at random from the G total groups, and\nwithin each selected group, a subset of S2 clients are sampled uniformly at random from the M total",
+    "source": "iclr_2026.pdf",
+    "page": 5,
+    "chunk_id": 4
+  },
+  {
+    "text": "t of S2 clients are sampled uniformly at random from the M totalt of S2 clients are sampled uniformly at random from the M totalclients, the following convergence bounds hold for each HFL topology.\nStar-Star: There exist ˜η = PKη, and ˜η ≤\n1\n10L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nS1PS2K + L˜ηζ2\nS2\n+ L˜ηδ2\nS1\n(8)\n+ L2˜η2σ2\nP 2K\n+ L2˜η2σ2\nPS2K + L2˜η2ζ2\nP 2\n+ L2˜η2ζ2\nS2\n+ L2˜η2δ2.\n(9)\n5",
+    "source": "iclr_2026.pdf",
+    "page": 5,
+    "chunk_id": 5
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nStar-Ring: There exist ˜η = PMKη, and ˜η ≤\n1\n15L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nS1PS2K + L˜ηζ2\nS2\n+ L˜ηδ2\nS1\n+ L2˜η2σ2\nPS2K + L2˜η2ζ2\nS2\n+ L2˜η2δ2.\n(10)\nRing-Star: There exist ˜η = GPKη, and ˜η ≤\n1\n15L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nS1PS2K + L˜ηζ2\nS2\n+ L˜ηδ2\nS1\n(11)\n+ L2˜η2σ2\nS1\n2P 2K + L2˜η2σ2\nS1PS2K + L2˜η2ζ2\nS1\n2P 2 + L2˜η2ζ2\nS2\n+ L2˜η2δ2\nS1\n.\n(12)\nRing-Ring: There exist ˜η = GPMKη, and ˜η ≤\n1\n20L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2",
+    "source": "iclr_2026.pdf",
+    "page": 6,
+    "chunk_id": 0
+  },
+  {
+    "text": "GPMKη, and ˜η ≤\n1\n20L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2 GPMKη, and ˜η ≤\n1\n20L, such that\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2S1PS2K + L˜ηζ2\nS2\n+ L˜ηδ2\nS1\n+ L2˜η2σ2\nS1PS2K + L2˜η2ζ2\nS2\n+ L2˜η2δ2\nS1\n.\n(13)\nEffective Learning Rate. Theorems 1 and 2 introduce a topology-dependent effective learning\nrate, denoted by ˜η, which incorporates key architectural parameters: the number of groups G, group\nrounds P, clients per group M, local update steps K, and global rounds R. This effective learning\nrate captures how hierarchical updates affect convergence. The derived bounds comprise an opti-",
+    "source": "iclr_2026.pdf",
+    "page": 6,
+    "chunk_id": 1
+  },
+  {
+    "text": "updates affect convergence. The derived bounds comprise an opti-updates affect convergence. The derived bounds comprise an opti-mization term that decreases with R, and error terms from stochastic noise and data heterogeneity.\nA larger ˜η accelerates optimization but amplifies errors. Corollary 1 and Corollary 2 specify an\noptimal ˜η that minimizes the overall bound.\nCorollary 1. (Convergence with full participation under effective learning rate). With the learning\nrate ˜η, the convergence rate satisfies the following, where O(·) hides absolute constants:\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+ T\n\u0013\n,\n(14)",
+    "source": "iclr_2026.pdf",
+    "page": 6,
+    "chunk_id": 2
+  },
+  {
+    "text": "ants:\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+ T\n\u0013\n,\n(14)ants:\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+ T\n\u0013\n,\n(14)and T denotes the topology-dependent terms defined as follows:\nStar-Star:\nT = (L2A2σ2)1/3\n(P 2KR2)1/3 + (L2A2σ2)1/3\n(PMKR2)1/3 + (L2A2ζ2)1/3\n(P 2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n.\n(15)\nStar-Ring:\nT = (L2A2σ2)1/3\n(PMKR2)1/3 + (L2A2ζ2)1/3\n(P 2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n.\n(16)\nRing-Star:\nT =\n(L2A2σ2)1/3\n(G2P 2KR2)1/3 +\n(L2A2σ2)1/3\n(GPMKR2)1/3 + (L2A2ζ2)1/3\n(G2P 2R2)1/3 + (L2A2δ2)1/3\n(R2)1/3\n.\n(17)\nRing-Ring:\nT =\n(L2A2σ2)1/3\n(GPMKR2)1/3 + (L2A2ζ2)1/3\n(G2P 2R2)1/3 + (L2A2δ2)1/3\n(R2)1/3\n.\n(18)",
+    "source": "iclr_2026.pdf",
+    "page": 6,
+    "chunk_id": 3
+  },
+  {
+    "text": "MKR2)1/3 + (L2A2ζ2)1/3\n(G2P 2R2)1/3 + (L2A2δ2)1/3\n(R2)1/3\n.\n(18)MKR2)1/3 + (L2A2ζ2)1/3\n(G2P 2R2)1/3 + (L2A2δ2)1/3\n(R2)1/3\n.\n(18)Corollary 2. (Convergence with partial participation under effective learning rate). With the learn-\ning rate ˜η, the convergence rate satisfies the following, where O(·) hides absolute constants:\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (LAσ2)1/2\n√S1PS2KR + (LAζ2)1/2\n√S2R\n+ (LAδ2)1/2\n√S1R\n+ T\n\u0013\n,\n(19)\nand T denotes the topology-dependent terms defined as follows:\n6",
+    "source": "iclr_2026.pdf",
+    "page": 6,
+    "chunk_id": 4
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nStar-Star:\nT = (L2A2σ2)1/3\n(P 2KR2)1/3 + (L2A2σ2)1/3\n(PS2KR2)1/3 + (L2A2ζ2)1/3\n(P 2R2)1/3\n+ (L2A2ζ2)1/3\n(S2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n.\n(20)\nStar-Ring:\nT = (L2A2σ2)1/3\n(PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n.\n(21)\nRing-Star:\nT =\n(L2A2σ2)1/3\n(S2\n1P 2KR2)1/3 +\n(L2A2σ2)1/3\n(S1PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2\n1P 2R2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3\n+ (L2A2δ2)1/3\n(S1R2)1/3 .\n(22)\nRing-Ring:\nT =\n(L2A2σ2)1/3\n(S1PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3",
+    "source": "iclr_2026.pdf",
+    "page": 7,
+    "chunk_id": 0
+  },
+  {
+    "text": "Ring-Ring:\nT =\n(L2A2σ2)1/3\n(S1PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3Ring-Ring:\nT =\n(L2A2σ2)1/3\n(S1PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3+ (L2A2δ2)1/3\n(S1R2)1/3 .\n(23)\n2.4\nKEY IMPLICATIONS\nThe Top-Tier Dominance Principle. Contrary to intuition, the synchronization mechanism at the\nglobal tier influences convergence significantly more than intra-group topology. This principle is\nquantitatively demonstrated in Corollaries 1 and 2. Specifically, for ring-based top-tier topologies,\nthe error terms include an additional scaling factor of G or S1 in the denominators of the SGD vari-",
+    "source": "iclr_2026.pdf",
+    "page": 7,
+    "chunk_id": 1
+  },
+  {
+    "text": "l scaling factor of G or S1 in the denominators of the SGD vari-l scaling factor of G or S1 in the denominators of the SGD vari-ance along with the intra-group heterogeneity terms, under full or partial participation respectively.\nThis also implies that under partial participation, increasing the number of participating groups or\nclients accelerates convergence. Furthermore, random shuffling introduces additional factors S1 and\nS2 to the heterogeneity terms (Li & Lyu, 2023; 2025). Consequently, ring-based updates are inher-\nently more robust to both stochastic noise and data heterogeneity. Such robustness manifests in two",
+    "source": "iclr_2026.pdf",
+    "page": 7,
+    "chunk_id": 2
+  },
+  {
+    "text": "c noise and data heterogeneity. Such robustness manifests in twoc noise and data heterogeneity. Such robustness manifests in twocrucial ways: (i) Ring-based top-tier configurations (Ring-Star, Ring-Ring) consistently outperform\nstar-based alternatives under data heterogeneity, with the gap widening as inter-group divergence\nincreases. (ii) The performance difference between top-tier topologies exceeds that between lower-\ntier configurations. For example, Ring-Star typically outperforms Star-Star by a larger margin than\nStar-Ring outperforms Star-Star, despite both differing only in the lower tier.",
+    "source": "iclr_2026.pdf",
+    "page": 7,
+    "chunk_id": 3
+  },
+  {
+    "text": "rforms Star-Star, despite both differing only in the lower tier.rforms Star-Star, despite both differing only in the lower tier.Inter-Group Heterogeneity as the Fundamental Bottleneck. Our analysis quantitatively estab-\nlishes that inter-group heterogeneity (δ) is the primary convergence bottleneck across all topolo-\ngies. For instance, under full participation, while all topologies share the same asymptotic con-\nvergence rate of O(1/\n√\nGPMKR), the practical convergence speed is dominated by inter-group\ndivergence, which decays slowly at O( (L2A2δ2)1/3\nR2/3\n) regardless of topology choice.\nIntra-group",
+    "source": "iclr_2026.pdf",
+    "page": 7,
+    "chunk_id": 4
+  },
+  {
+    "text": "O( (L2A2δ2)1/3\nR2/3\n) regardless of topology choice.\nIntra-groupO( (L2A2δ2)1/3\nR2/3\n) regardless of topology choice.\nIntra-groupheterogeneity (ζ) decays significantly faster—particularly in ring-based top-tier configurations\nO( (L2A2ζ2)1/3\nR2/3G2/3P 2/3 )—making it a secondary concern compared to inter-group divergence. This insight\nprovides a principled foundation for system design: to accelerate convergence in heterogeneous en-\nvironments, minimizing inter-group divergence should be prioritized. Practical strategies such as\nintelligent client clustering, e.g., grouping clients with complementary data distributions to approx-",
+    "source": "iclr_2026.pdf",
+    "page": 7,
+    "chunk_id": 5
+  },
+  {
+    "text": "rouping clients with complementary data distributions to approx-rouping clients with complementary data distributions to approx-imate the global distribution (Zeng et al., 2022), are more impactful than optimizing local training\ndynamics within groups.\nTopology-Structure Compatibility Principle. The optimal topology selection depends critically\non the underlying client grouping structure, creating a fundamental design trade-off. Ring-Star\nexcels with numerous small groups. When clients naturally form many small clusters (e.g., IoT\ndevices, retail outlets), Ring-Star leverages parallelism at the lower tier while benefiting from the",
+    "source": "iclr_2026.pdf",
+    "page": 7,
+    "chunk_id": 6
+  },
+  {
+    "text": "everages parallelism at the lower tier while benefiting from theeverages parallelism at the lower tier while benefiting from thesmoothing effect of sequential global updates. Its convergence rate improves dramatically with\nincreasing G, making it ideal for deployments with abundant but sparse client clusters. Star-Ring\ndominates with few large clusters. In settings with limited but data-rich clusters, Star-Ring’s intra-\ngroup ring aggregation enables deeper local refinement before global synchronization, producing\n7",
+    "source": "iclr_2026.pdf",
+    "page": 7,
+    "chunk_id": 7
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nhigher-quality group models. This topology shows diminishing returns as G increases beyond a\ncertain point. Star-Star consistently underperforms. Despite its conceptual simplicity, the double\naveraging in Star-Star significantly dampens the effective learning rate, making it the least efficient\nconfiguration across all heterogeneity scenarios.\nWall-Clock Time Considerations in Practical Deployments. While convergence properties guide",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 0
+  },
+  {
+    "text": "ons in Practical Deployments. While convergence properties guideons in Practical Deployments. While convergence properties guidetheoretical topology selection, real-world deployments must account for wall-clock execution time\nunder bandwidth constraints. Our analysis in Appendix A.2 reveals that star topologies don’t al-\nways achieve ideal O(1) parallelism in practice due to straggler effects and diluted bandwidth re-\nsources. The total wall-clock time follows Eq. (24), where communication overheads scale with\ngroup and client counts. In bandwidth-constrained edge environments, ring-based topologies of-",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 1
+  },
+  {
+    "text": "ndwidth-constrained edge environments, ring-based topologies of-ndwidth-constrained edge environments, ring-based topologies of-ten demonstrate competitive performance despite sequential updates, as they avoid synchroniza-\ntion bottlenecks and uplink transmission constraints. This insight suggests that in networks with\nheterogeneous bandwidth capabilities or significant straggler effects, ring-based top-tier configura-\ntions (Ring-Star, Ring-Ring) may offer better practical performance than theoretically optimal but\ncommunication-intensive star-based alternatives, especially when inter-group heterogeneity is high.\n3\nEXPERIMENTS\n3.1",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 2
+  },
+  {
+    "text": "cially when inter-group heterogeneity is high.\n3\nEXPERIMENTS\n3.1cially when inter-group heterogeneity is high.\n3\nEXPERIMENTS\n3.1EXPERIMENTAL SETTINGS\nWe employ ResNet-18 (Lin et al., 2020) and VGG-9 (Acar et al., 2021) for CIFAR-10 (Krizhevsky\net al., 2009), ResNet-18 for CINIC-10 (Darlow et al., 2018), ResNet-10 for Fashion-MNIST (Xiao\net al., 2017), and MLP for SST-2 (Socher et al., 2013). We simulate a hierarchical setup with\nN = 100 clients distributed across G = 10 groups under four data partitioning schemes: (1) IID-\nIID, (2) Non-IID-IID, (3) IID-Non-IID, and (4) Non-IID-Non-IID. To ensure fair comparison, the",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 3
+  },
+  {
+    "text": "Non-IID, and (4) Non-IID-Non-IID. To ensure fair comparison, theNon-IID, and (4) Non-IID-Non-IID. To ensure fair comparison, thelearning rate (η) was tuned individually for each topology. We consistently observed that to maintain\ncomparable convergence, the required raw learning rates follow the pattern: ηStar-Star > ηStar-Ring ≈\nηRing-Star > ηRing-Ring. This empirical observation aligns perfectly with our theoretical findings.\nDetailed descriptions of the hyperparameters (e.g., batch size, momentum), specific definitions of\nthe data partitioning schemes, and the complete search space for learning rates are provided in\nAppendix B.1.",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 4
+  },
+  {
+    "text": "te search space for learning rates are provided in\nAppendix B.1.te search space for learning rates are provided in\nAppendix B.1.3.2\nEFFECT OF TOPOLOGY\nFigure 2 presents the test accuracy curves for the four HFL topologies under the four heterogeneity\nsettings. The results consistently show that topologies with a ring-based top-tier aggregation (i.e.,\nRing-Star and Ring-Ring) achieve superior convergence speed and higher final accuracy compared\nto their star-based counterparts. Notably, the classical Star-Star configuration (equivalent to standard",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 5
+  },
+  {
+    "text": "y, the classical Star-Star configuration (equivalent to standardy, the classical Star-Star configuration (equivalent to standardHFedAvg) performs the worst across all settings. This is attributed to its conservative update mech-\nanism, i.e., the double averaging at both group and global levels dampens the effective learning rate,\nslowing convergence. In contrast, ring-based top-tier updates propagate changes sequentially, en-\nabling more aggressive and continuous model refinement. This allows the global model to traverse\nthe loss landscape more rapidly, especially in heterogeneous environments. However, this perfor-",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 6
+  },
+  {
+    "text": "especially in heterogeneous environments. However, this perfor- especially in heterogeneous environments. However, this perfor-mance advantage necessitates careful operational considerations. Empirically, ring topologies may\nexhibit greater sensitivity to data distribution skewness, manifesting as slightly higher volatility in\ntraining curves compared to other topologies. This suggests that a client with highly skewed data\ncould influence the update chain, implying that hyperparameter tuning (e.g., learning rate calibra-\ntion) becomes more critical to maintain stability.\n3.3\nEFFECT OF DATA HETEROGENEITY",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 7
+  },
+  {
+    "text": "critical to maintain stability.\n3.3\nEFFECT OF DATA HETEROGENEITYcritical to maintain stability.\n3.3\nEFFECT OF DATA HETEROGENEITYTable 2 reports the final test accuracy for all topology and data partition combinations. A key\nobservation is that inter-group heterogeneity has a more detrimental effect on model performance\nthan intra-group heterogeneity. For instance, on CIFAR-10 with ResNet-18 under the Star-Ring\ntopology, shifting to Non-IID group distributions causes a 2.08% accuracy drop (from 90.30% to\n88.22%), whereas Non-IID client distributions lead to a smaller drop of only 0.75% (to 89.55%). The",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 8
+  },
+  {
+    "text": "tributions lead to a smaller drop of only 0.75% (to 89.55%). Thetributions lead to a smaller drop of only 0.75% (to 89.55%). Theeffect is even more pronounced on CINIC-10, where in the same setup, inter-group heterogeneity\n8",
+    "source": "iclr_2026.pdf",
+    "page": 8,
+    "chunk_id": 9
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n0\n1000\n2000\n3000\n4000\n5000\nGlobal Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nStar-Star\nStar-Ring\nRing-Star\nRing-Ring\n(a) Groups IID and Clients\nIID\n0\n1000\n2000\n3000\n4000\n5000\nGlobal Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nStar-Star\nStar-Ring\nRing-Star\nRing-Ring\n(b) Groups IID and Clients\nNon-IID\n0\n1000\n2000\n3000\n4000\n5000\nGlobal Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nStar-Star\nStar-Ring\nRing-Star\nRing-Ring\n(c) Groups Non-IID and\nClients IID\n0\n1000\n2000\n3000\n4000",
+    "source": "iclr_2026.pdf",
+    "page": 9,
+    "chunk_id": 0
+  },
+  {
+    "text": "ng-Ring\n(c) Groups Non-IID and\nClients IID\n0\n1000\n2000\n3000\n4000ng-Ring\n(c) Groups Non-IID and\nClients IID\n0\n1000\n2000\n3000\n40005000\nGlobal Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nStar-Star\nStar-Ring\nRing-Star\nRing-Ring\n(d) Groups Non-IID and\nClients Non-IID\nFigure 2: Comparison of the four HFL topologies on CIFAR-10 Dataset\nTable 2: Test accuracy (%) on CIFAR-10, CINIC-10, Fashion-MNIST, and SST-2 under various\nHFL topologies and data partitioning approaches. The non-IID partitions are generated using a\nDirichlet distribution (Yurochkin et al., 2019; Hsu et al., 2019).\nDataset\nModel\nHeterogeneity\nTopology\nInter\nIntra\nStar-Star",
+    "source": "iclr_2026.pdf",
+    "page": 9,
+    "chunk_id": 1
+  },
+  {
+    "text": "019).\nDataset\nModel\nHeterogeneity\nTopology\nInter\nIntra\nStar-Star019).\nDataset\nModel\nHeterogeneity\nTopology\nInter\nIntra\nStar-StarStar-Ring\nRing-Star\nRing-Ring\nCIFAR-10\nResNet-18\nIID\nIID\n88.48\n90.30\n90.40\n91.53\nNon-IID\n87.01\n89.55\n89.75\n91.10\nNon-IID\nIID\n87.03\n88.22\n89.15\n90.94\nNon-IID\n86.78\n87.40\n90.01\n90.33\nVGG-9\nIID\nIID\n84.83\n87.30\n87.77\n89.10\nNon-IID\n84.21\n85.33\n87.81\n88.17\nNon-IID\nIID\n85.00\n85.42\n86.16\n88.12\nNon-IID\n83.80\n85.04\n87.05\n87.63\nCINIC-10\nResNet-18\nIID\nIID\n76.88\n78.59\n78.70\n79.56\nNon-IID\n74.25\n76.09\n78.23\n78.35\nNon-IID\nIID\n74.20\n72.53\n75.83\n76.23\nNon-IID\n73.63\n74.21\n77.11\n76.78\nFashion-\nMNIST\nResNet-10\nIID\nIID\n89.70",
+    "source": "iclr_2026.pdf",
+    "page": 9,
+    "chunk_id": 2
+  },
+  {
+    "text": "D\n73.63\n74.21\n77.11\n76.78\nFashion-\nMNIST\nResNet-10\nIID\nIID\n89.70D\n73.63\n74.21\n77.11\n76.78\nFashion-\nMNIST\nResNet-10\nIID\nIID\n89.7092.59\n92.67\n93.01\nNon-IID\n87.45\n92.33\n92.76\n93.07\nNon-IID\nIID\n88.21\n89.41\n91.40\n91.33\nNon-IID\n88.04\n92.18\n92.27\n93.33\nSST-2\nMLP\nIID\nIID\n69.61\n72.36\n80.50\n81.42\nNon-IID\n69.95\n73.17\n79.59\n80.50\nNon-IID\nIID\n68.12\n73.85\n79.13\n81.08\nNon-IID\n68.12\n73.97\n78.44\n81.65\nresults in a substantial 6.06% performance degradation (from 78.59% to 72.53%), compared to a\n2.50% drop for intra-group heterogeneity. This trend also holds for Fashion-MNIST with ResNet-",
+    "source": "iclr_2026.pdf",
+    "page": 9,
+    "chunk_id": 3
+  },
+  {
+    "text": "erogeneity. This trend also holds for Fashion-MNIST with ResNet-erogeneity. This trend also holds for Fashion-MNIST with ResNet-10, where inter-group heterogeneity causes a significant 3.18% accuracy drop (from 92.59% to\n89.41%), while the impact of intra-group heterogeneity is a negligible 0.26% decrease.\nThis empirical finding strongly supports our theoretical conclusion that inter-group divergence(δ)\nis the dominant bottleneck in HFL convergence. It suggests that system designers should prioritize\nclustering strategies that minimize distributional differences between groups even at the expense of",
+    "source": "iclr_2026.pdf",
+    "page": 9,
+    "chunk_id": 4
+  },
+  {
+    "text": "distributional differences between groups even at the expense ofdistributional differences between groups even at the expense ofincreased intra-group heterogeneity. For example, grouping clients by semantic similarity of data\n(e.g., geographic region, user demographics) rather than arbitrary network proximity can signifi-\ncantly improve convergence.\n9",
+    "source": "iclr_2026.pdf",
+    "page": 9,
+    "chunk_id": 5
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n3.4\nEFFECT OF GROUPS\nWe further investigate how the number of groups G influences performance, focusing on the hybrid\ntopologies (i.e., Star-Ring and Ring-Star) as they offer a practical balance between convergence ef-\nficiency and stability. With the total number of clients N = 100, we vary the number of groups\nG ∈{1, 5, 10, 20, 100} and tune the learning rate for each configuration to ensure optimal perfor-",
+    "source": "iclr_2026.pdf",
+    "page": 10,
+    "chunk_id": 0
+  },
+  {
+    "text": "e learning rate for each configuration to ensure optimal perfor-e learning rate for each configuration to ensure optimal perfor-mance. Figure 3 illustrates the convergence of Star-Ring and Ring-Star under both IID and Non-IID\nsettings. We can find two distinct patterns:\n(1) Star-Ring performs best with fewer, larger groups, i.e., small values of G. This is because intra-\ngroup ring aggregation benefits from longer update chains: sequential updates allow for deeper local\nrefinement before global synchronization, producing higher-quality group models.",
+    "source": "iclr_2026.pdf",
+    "page": 10,
+    "chunk_id": 1
+  },
+  {
+    "text": "e global synchronization, producing higher-quality group models.e global synchronization, producing higher-quality group models.(2) Ring-Star, in contrast, excels with more, smaller groups, i.e., large values of G. Here, parallel\nintra-group aggregation (star) is less effective in large groups due to the averaging of divergent local\nupdates, which can dilute valuable gradients. Smaller groups reduce this averaging effect, and the\nsequential inter-group updates in Ring-Star enable fine-grained global alignment.\nIt is worth noting that our conclusion continues to hold even in the extreme cases—Ring-Star with",
+    "source": "iclr_2026.pdf",
+    "page": 10,
+    "chunk_id": 2
+  },
+  {
+    "text": "usion continues to hold even in the extreme cases—Ring-Star withusion continues to hold even in the extreme cases—Ring-Star withG = N and Star-Ring with G = 1, both degenerating to a pure ring topology. This does not\nconflict with the notion of “catastrophic forgetting” in sequential federated learning, because the\nstep size is not fixed. We scale it with the number of groups to keep the effective learning rate\nconstant. Under the same effective learning rate, selecting an appropriate G therefore yields optimal\nperformance. These results highlight a critical design principle: optimal topology selection depends",
+    "source": "iclr_2026.pdf",
+    "page": 10,
+    "chunk_id": 3
+  },
+  {
+    "text": "a critical design principle: optimal topology selection depends a critical design principle: optimal topology selection dependson the underlying group structure. In applications with a few large, data-rich clusters (e.g., hospital\nnetworks), Star-Ring is preferable. In contrast, systems with many small or independent units (e.g.,\nIoT devices, retail outlets) benefit more from the Ring-Star topology.\n0\n1000\n2000\n3000\n4000\n5000\nGlobal Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nG=1\nG=5\nG=10\nG=20\nG=100\n(a) Star-Ring (IID)\n0\n1000\n2000\n3000\n4000\n5000\nGlobal Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nG=1\nG=5\nG=10\nG=20\nG=100",
+    "source": "iclr_2026.pdf",
+    "page": 10,
+    "chunk_id": 4
+  },
+  {
+    "text": "Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nG=1\nG=5\nG=10\nG=20\nG=100Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nG=1\nG=5\nG=10\nG=20\nG=100(b) Star-Ring (Non-IID)\n0\n1000\n2000\n3000\n4000\n5000\nGlobal Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nG=1\nG=5\nG=10\nG=20\nG=100\n(c) Ring-Star (IID)\n0\n1000\n2000\n3000\n4000\n5000\nGlobal Rounds\n20\n40\n60\n80\n100\nTest Accuracy (%)\nG=1\nG=5\nG=10\nG=20\nG=100\n(d) Ring-Star (Non-IID)\nFigure 3: Comparison of Star-Ring and Ring-Star topologies with different numbers of groups on\nCIFAR10 Dataset\n4\nCONCLUSION\nThis paper presents the first unified convergence analysis for all four HFL topologies under non-",
+    "source": "iclr_2026.pdf",
+    "page": 10,
+    "chunk_id": 5
+  },
+  {
+    "text": "fied convergence analysis for all four HFL topologies under non-fied convergence analysis for all four HFL topologies under non-convex objectives and intra/inter-group data heterogeneity. Our results reveal that: (1) top-tier\ntopology dictates convergence behavior, and ring-based top-tier aggregation generally converges\nfaster than star-based methods; (2) inter-group heterogeneity is the dominant bottleneck, outweigh-\ning intra-group effects; and (3) optimal topology depends on group structure, where Ring-Star suits\nmany small groups, while Star-Ring excels with few large clusters. These findings enable sys-",
+    "source": "iclr_2026.pdf",
+    "page": 10,
+    "chunk_id": 6
+  },
+  {
+    "text": "-Ring excels with few large clusters. These findings enable sys--Ring excels with few large clusters. These findings enable sys-tem designers to move beyond heuristic topology choices and instead make informed, theoretically\ngrounded decisions based on deployment-specific constraints such as network scale, client distribu-\ntion, and data heterogeneity profiles.\nACKNOWLEDGMENTS\nThis work is supported in part by National Science and Technology Major Project of China under\nGrant 2025ZD1302200, and in part by National Natural Science Foundation of China under Grant\n62371059.\n10",
+    "source": "iclr_2026.pdf",
+    "page": 10,
+    "chunk_id": 7
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nREFERENCES\nDurmus Alp Emre Acar, Yue Zhao, Ramon Matas Navarro, Matthew Mattina, Paul N Whatmough,\nand Venkatesh Saligrama. Federated learning based on dynamic regularization. arXiv preprint\narXiv:2111.04263, 2021.\nL´eon Bottou, Frank E Curtis, and Jorge Nocedal. Optimization methods for large-scale machine\nlearning. SIAM review, 60(2):223–311, 2018.\nTimothy Castiglia, Anirban Das, and Stacy Patterson. Multi-level local sgd: Distributed sgd for",
+    "source": "iclr_2026.pdf",
+    "page": 11,
+    "chunk_id": 0
+  },
+  {
+    "text": "and Stacy Patterson. Multi-level local sgd: Distributed sgd for and Stacy Patterson. Multi-level local sgd: Distributed sgd forheterogeneous hierarchical networks. In International Conference on Learning Representations,\n2021.\nHE Chaoyang, M ANNAVARAM, and S AVESTIMEHR. Group knowledge transfer: Collaborative\ntraining of large cnns on the edge [j]. arXiv preprint arXiv:2007.14513, 2020.\nCheng Chen, Ziyi Chen, Yi Zhou, and Bhavya Kailkhura. Fedcluster: Boosting the convergence of\nfederated learning via cluster-cycling. In 2020 IEEE international conference on big data (Big\nData), pp. 5017–5026. IEEE, 2020.",
+    "source": "iclr_2026.pdf",
+    "page": 11,
+    "chunk_id": 1
+  },
+  {
+    "text": "al conference on big data (Big\nData), pp. 5017–5026. IEEE, 2020.al conference on big data (Big\nData), pp. 5017–5026. IEEE, 2020.Luke N Darlow, Elliot J Crowley, Antreas Antoniou, and Amos J Storkey. Cinic-10 is not imagenet\nor cifar-10. arXiv preprint arXiv:1810.03505, 2018.\nYucheng Ding, Chaoyue Niu, Yikai Yan, Zhenzhe Zheng, Fan Wu, Guihai Chen, Shaojie Tang, and\nRongfei Jia. Distributed optimization over block-cyclic data. In Proceedings of the 6th ACM\nInternational Conference on Multimedia in Asia Workshops, pp. 1–6, 2024.\nQingze Fang, Zhiwei Zhai, Shuai Yu, Qiong Wu, Xiaowen Gong, and Xu Chen. Olive branch learn-",
+    "source": "iclr_2026.pdf",
+    "page": 11,
+    "chunk_id": 2
+  },
+  {
+    "text": "uai Yu, Qiong Wu, Xiaowen Gong, and Xu Chen. Olive branch learn-uai Yu, Qiong Wu, Xiaowen Gong, and Xu Chen. Olive branch learn-ing: A topology-aware federated learning framework for space-air-ground integrated network.\nIEEE Transactions on Wireless Communications, 22(7):4534–4551, 2022.\nWenzhi Fang, Dong-Jun Han, Evan Chen, Shiqiang Wang, and Christopher Brinton. Hierarchical\nfederated learning with multi-timescale gradient correction.\nAdvances in Neural Information\nProcessing Systems, 37:78863–78904, 2024.\nSaeed Ghadimi and Guanghui Lan. Stochastic first-and zeroth-order methods for nonconvex stochas-",
+    "source": "iclr_2026.pdf",
+    "page": 11,
+    "chunk_id": 3
+  },
+  {
+    "text": "Stochastic first-and zeroth-order methods for nonconvex stochas-Stochastic first-and zeroth-order methods for nonconvex stochas-tic programming. SIAM journal on optimization, 23(4):2341–2368, 2013.\nTzu-Ming Harry Hsu, Hang Qi, and Matthew Brown. Measuring the effects of non-identical data\ndistribution for federated visual classification. arXiv preprint arXiv:1909.06335, 2019.\nJianjun Huang, Lixin Ye, and Li Kang. Fedsr: A semi-decentralized federated learning algorithm\nfor non-iidness in iot system. arXiv preprint arXiv:2403.14718, 2024.",
+    "source": "iclr_2026.pdf",
+    "page": 11,
+    "chunk_id": 4
+  },
+  {
+    "text": "on-iidness in iot system. arXiv preprint arXiv:2403.14718, 2024.on-iidness in iot system. arXiv preprint arXiv:2403.14718, 2024.Xiaohan Jiang and Hongbin Zhu. On the convergence of hierarchical federated learning with partial\nworker participation. In The 40th Conference on Uncertainty in Artificial Intelligence, 2024.\nAnastasia Koloskova, Nicolas Loizou, Sadra Boreiri, Martin Jaggi, and Sebastian Stich. A unified\ntheory of decentralized sgd with changing topology and local updates. In International conference\non machine learning, pp. 5381–5393. PMLR, 2020.",
+    "source": "iclr_2026.pdf",
+    "page": 11,
+    "chunk_id": 5
+  },
+  {
+    "text": "ional conference\non machine learning, pp. 5381–5393. PMLR, 2020.ional conference\non machine learning, pp. 5381–5393. PMLR, 2020.Alex Krizhevsky, Geoffrey Hinton, et al. Learning multiple layers of features from tiny images.\n2009.\nJin-woo Lee, Jaehoon Oh, Sungsu Lim, Se-Young Yun, and Jae-Gil Lee.\nTornadoaggregate:\nAccurate and scalable federated learning via the ring-based architecture.\narXiv preprint\narXiv:2012.03214, 2020.\nYipeng Li and Xinchen Lyu. Convergence analysis of sequential federated learning on heteroge-\nneous data. Advances in Neural Information Processing Systems, 36:56700–56755, 2023.",
+    "source": "iclr_2026.pdf",
+    "page": 11,
+    "chunk_id": 6
+  },
+  {
+    "text": "in Neural Information Processing Systems, 36:56700–56755, 2023. in Neural Information Processing Systems, 36:56700–56755, 2023.Yipeng Li and Xinchen Lyu. Sharp bounds for sequential federated learning on heterogeneous data.\nJournal of Machine Learning Research, 26(70):1–55, 2025.\n11",
+    "source": "iclr_2026.pdf",
+    "page": 11,
+    "chunk_id": 7
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nWei Yang Bryan Lim, Zehui Xiong, Chunyan Miao, Dusit Niyato, Qiang Yang, Cyril Leung, and\nH Vincent Poor.\nHierarchical incentive mechanism design for federated machine learning in\nmobile networks. IEEE Internet of Things Journal, 7(10):9575–9588, 2020.\nWei Yang Bryan Lim, Jer Shyuan Ng, Zehui Xiong, Dusit Niyato, Chunyan Miao, and Dong In\nKim. Dynamic edge association and resource allocation in self-organizing hierarchical feder-",
+    "source": "iclr_2026.pdf",
+    "page": 12,
+    "chunk_id": 0
+  },
+  {
+    "text": "n and resource allocation in self-organizing hierarchical feder-n and resource allocation in self-organizing hierarchical feder-ated learning networks. IEEE Journal on Selected Areas in Communications, 39(12):3640–3653,\n2021.\nTao Lin, Lingjing Kong, Sebastian U Stich, and Martin Jaggi. Ensemble distillation for robust model\nfusion in federated learning. Advances in neural information processing systems, 33:2351–2363,\n2020.\nChang Liu, Jun Zhao, and Yitong Wang. Computation and communication resource optimization\nfor efficient hierarchical federated learning. IEEE Transactions on Networking, 2025.",
+    "source": "iclr_2026.pdf",
+    "page": 12,
+    "chunk_id": 1
+  },
+  {
+    "text": "hical federated learning. IEEE Transactions on Networking, 2025.hical federated learning. IEEE Transactions on Networking, 2025.Lumin Liu, Jun Zhang, SH Song, and Khaled B Letaief. Client-edge-cloud hierarchical federated\nlearning. In ICC 2020-2020 IEEE international conference on communications (ICC), pp. 1–6.\nIEEE, 2020.\nLumin Liu, Jun Zhang, Shenghui Song, and Khaled B Letaief. Hierarchical federated learning\nwith quantization: Convergence analysis and system design.\nIEEE Transactions on Wireless\nCommunications, 22(1):2–18, 2022.\nBrendan McMahan, Eider Moore, Daniel Ramage, Seth Hampson, and Blaise Aguera y Arcas.",
+    "source": "iclr_2026.pdf",
+    "page": 12,
+    "chunk_id": 2
+  },
+  {
+    "text": "r Moore, Daniel Ramage, Seth Hampson, and Blaise Aguera y Arcas.r Moore, Daniel Ramage, Seth Hampson, and Blaise Aguera y Arcas.Communication-efficient learning of deep networks from decentralized data. In Artificial intelli-\ngence and statistics, pp. 1273–1282. PMLR, 2017.\nRichard Socher, Alex Perelygin, Jean Wu, Jason Chuang, Christopher D Manning, Andrew Y Ng,\nand Christopher Potts. Recursive deep models for semantic compositionality over a sentiment\ntreebank. In Proceedings of the 2013 conference on empirical methods in natural language pro-\ncessing, pp. 1631–1642, 2013.",
+    "source": "iclr_2026.pdf",
+    "page": 12,
+    "chunk_id": 3
+  },
+  {
+    "text": "l methods in natural language pro-\ncessing, pp. 1631–1642, 2013.l methods in natural language pro-\ncessing, pp. 1631–1642, 2013.Jiayi Wang, Shiqiang Wang, Rong-Rong Chen, and Mingyue Ji. Demystifying why local aggrega-\ntion helps: Convergence analysis of hierarchical sgd. In Proceedings of the AAAI conference on\nartificial intelligence, volume 36, pp. 8548–8556, 2022.\nShiqiang Wang and Mingyue Ji. A unified analysis of federated learning with arbitrary client par-\nticipation. Advances in neural information processing systems, 35:19124–19137, 2022.",
+    "source": "iclr_2026.pdf",
+    "page": 12,
+    "chunk_id": 4
+  },
+  {
+    "text": "in neural information processing systems, 35:19124–19137, 2022. in neural information processing systems, 35:19124–19137, 2022.Han Xiao, Kashif Rasul, and Roland Vollgraf. Fashion-mnist: a novel image dataset for benchmark-\ning machine learning algorithms. arXiv preprint arXiv:1708.07747, 2017.\nXingrun Yan, Shiyuan Zuo, Rongfei Fan, Han Hu, Li Shen, Puning Zhao, and Yong Luo. Sequential\nfederated learning in hierarchical architecture on non-iid datasets. IEEE Transactions on Mobile\nComputing, 2025.\nZhengjie Yang, Sen Fu, Wei Bao, Dong Yuan, and Albert Y Zomaya. Hierarchical federated learn-",
+    "source": "iclr_2026.pdf",
+    "page": 12,
+    "chunk_id": 5
+  },
+  {
+    "text": "o, Dong Yuan, and Albert Y Zomaya. Hierarchical federated learn-o, Dong Yuan, and Albert Y Zomaya. Hierarchical federated learn-ing with momentum acceleration in multi-tier networks. IEEE Transactions on Parallel and Dis-\ntributed Systems, 34(10):2629–2641, 2023.\nMikhail Yurochkin, Mayank Agarwal, Soumya Ghosh, Kristjan Greenewald, Nghia Hoang, and\nYasaman Khazaeni. Bayesian nonparametric federated learning of neural networks. In Interna-\ntional conference on machine learning, pp. 7252–7261. PMLR, 2019.\nShenglai Zeng, Zonghang Li, Hongfang Yu, Yihong He, Zenglin Xu, Dusit Niyato, and Han Yu.",
+    "source": "iclr_2026.pdf",
+    "page": 12,
+    "chunk_id": 6
+  },
+  {
+    "text": "i, Hongfang Yu, Yihong He, Zenglin Xu, Dusit Niyato, and Han Yu.i, Hongfang Yu, Yihong He, Zenglin Xu, Dusit Niyato, and Han Yu.Heterogeneous federated learning via grouped sequential-to-parallel training. In International\nConference on Database Systems for Advanced Applications, pp. 455–471. Springer, 2022.\nFan Zhou and Guojing Cong. A distributed hierarchical sgd algorithm with sparse global reduction.\narXiv preprint arXiv:1903.05133, 2019.\n12",
+    "source": "iclr_2026.pdf",
+    "page": 12,
+    "chunk_id": 7
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nA\nDISCUSSION\nA.1\nALGORITHM DETAILS\nFor clarity and completeness, this appendix provides the detailed pseudocode for the four HFL\ntopologies mentioned in the main body of our paper. Each algorithm outlines a different communi-\ncation pattern for both inter-group and intra-group model aggregation.\nThe Star-Star topology (Algorithm 1) represents a fully parallel framework. Both the groups at",
+    "source": "iclr_2026.pdf",
+    "page": 13,
+    "chunk_id": 0
+  },
+  {
+    "text": "thm 1) represents a fully parallel framework. Both the groups atthm 1) represents a fully parallel framework. Both the groups atthe server level and the clients within each group perform their training and updates in parallel,\nsynchronizing with their respective servers before aggregation.\nAlgorithm 1 Star-Star Hierarchical FL\n1: for global rounds r = 0, 1, . . . , R −1 do\n2:\nfor groups g = 1, 2, . . . , G in parallel do\n3:\nInitialize group model: x(r)\ng,0 = x(r)\n4:\nfor group rounds p = 0, 1, . . . , P −1 do\n5:\nfor clients m = 1, 2, . . . , M in parallel do\n6:\nInitialize local model: x(r)\ng,p,m,0 = x(r)\ng,p\n7:",
+    "source": "iclr_2026.pdf",
+    "page": 13,
+    "chunk_id": 1
+  },
+  {
+    "text": "arallel do\n6:\nInitialize local model: x(r)\ng,p,m,0 = x(r)\ng,p\n7:arallel do\n6:\nInitialize local model: x(r)\ng,p,m,0 = x(r)\ng,p\n7:for local steps k = 0, 1, . . . , K −1 do\n8:\nx(r)\ng,p,m,k+1 = x(r)\ng,p,m,k −ηg(r)\ng,p,m,k\n9:\nend for\n10:\nend for\n11:\nGroup aggregation: x(r)\ng,p+1 =\n1\nM\nPM\nm=1 x(r)\ng,p,m,K\n12:\nend for\n13:\nend for\n14:\nGlobal aggregation: x(r+1) = 1\nG\nPG\ng=1 x(r)\ng,P\n15: end for\nThe Star-Ring topology (Algorithm 2) combines parallel inter-group communication with sequential\nintra-group updates. While groups update in parallel with the global server, clients within each group",
+    "source": "iclr_2026.pdf",
+    "page": 13,
+    "chunk_id": 2
+  },
+  {
+    "text": "te in parallel with the global server, clients within each groupte in parallel with the global server, clients within each groupform a ring, passing the model sequentially from one client to the next.\nAlgorithm 2 Star-Ring Hierarchical FL\n1: for global rounds r = 0, 1, . . . , R −1 do\n2:\nfor groups g = 1, 2, . . . , G in parallel do\n3:\nInitialize group model: x(r)\ng,0 = x(r)\n4:\nfor group rounds p = 0, 1, . . . , P −1 do\n5:\nfor clients m = 1, 2, . . . , M in sequence do\n6:\nInitialize local model: x(r)\ng,p,m,0 =\n(\nx(r)\ng,p\nif m = 1\nx(r)\ng,p,m−1,K\nif m > 1\n7:\nfor local steps k = 0, 1, . . . , K −1 do\n8:\nx(r)\ng,p,m,k+1 = x(r)",
+    "source": "iclr_2026.pdf",
+    "page": 13,
+    "chunk_id": 3
+  },
+  {
+    "text": "r local steps k = 0, 1, . . . , K −1 do\n8:\nx(r)\ng,p,m,k+1 = x(r)r local steps k = 0, 1, . . . , K −1 do\n8:\nx(r)\ng,p,m,k+1 = x(r)g,p,m,k −ηg(r)\ng,p,m,k\n9:\nend for\n10:\nend for\n11:\nGroup model: x(r)\ng,p+1 = x(r)\ng,p,M,K\n12:\nend for\n13:\nend for\n14:\nGlobal aggregation: x(r+1) = 1\nG\nPG\ng=1 x(r)\ng,P\n15: end for\nConversely, the Ring-Star topology (Algorithm 3) employs sequential communication among groups\nand parallel updates within them. The groups form a ring at the global level, while clients inside\neach group operate in a standard star configuration.\n13",
+    "source": "iclr_2026.pdf",
+    "page": 13,
+    "chunk_id": 4
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nAlgorithm 3 Ring-Star Hierarchical FL\n1: for global rounds r = 0, 1, . . . , R −1 do\n2:\nfor groups g = 1, 2, . . . , G in sequence do\n3:\nInitialize group model: x(r)\ng,0 =\n(\nx(r)\nif g = 1\nx(r)\ng−1,P\nif g > 1\n4:\nfor group rounds p = 0, 1, . . . , P −1 do\n5:\nfor clients m = 1, 2, . . . , M in parallel do\n6:\nInitialize local model: x(r)\ng,p,m,0 = x(r)\ng,p\n7:\nfor local steps k = 0, 1, . . . , K −1 do\n8:\nx(r)\ng,p,m,k+1 = x(r)\ng,p,m,k −ηg(r)\ng,p,m,k\n9:\nend for\n10:",
+    "source": "iclr_2026.pdf",
+    "page": 14,
+    "chunk_id": 0
+  },
+  {
+    "text": "o\n8:\nx(r)\ng,p,m,k+1 = x(r)\ng,p,m,k −ηg(r)\ng,p,m,k\n9:\nend for\n10:o\n8:\nx(r)\ng,p,m,k+1 = x(r)\ng,p,m,k −ηg(r)\ng,p,m,k\n9:\nend for\n10:end for\n11:\nGroup aggregation: x(r)\ng,p+1 =\n1\nM\nPM\nm=1 x(r)\ng,p,m,K\n12:\nend for\n13:\nend for\n14:\nGlobal model: x(r+1) = x(r)\nG,P\n15: end for\nThe Ring-Ring topology (Algorithm 4) implements a fully sequential communication protocol. Both\nthe groups at the global level and the clients within each group update their models in a sequential,\nring-based manner.\nAlgorithm 4 Ring-Ring Hierarchical FL\n1: for global rounds r = 0, 1, . . . , R −1 do\n2:\nfor groups g = 1, 2, . . . , G in sequence do\n3:",
+    "source": "iclr_2026.pdf",
+    "page": 14,
+    "chunk_id": 1
+  },
+  {
+    "text": ". , R −1 do\n2:\nfor groups g = 1, 2, . . . , G in sequence do\n3: . , R −1 do\n2:\nfor groups g = 1, 2, . . . , G in sequence do\n3:Initialize group model: x(r)\ng,0 =\n(\nx(r)\nif g = 1\nx(r)\ng−1,P\nif g > 1\n4:\nfor group rounds p = 0, 1, . . . , P −1 do\n5:\nfor clients m = 1, 2, . . . , M in sequence do\n6:\nInitialize local model: x(r)\ng,p,m,0 =\n(\nx(r)\ng,p\nif m = 1\nx(r)\ng,p,m−1,K\nif m > 1\n7:\nfor local steps k = 0, 1, . . . , K −1 do\n8:\nx(r)\ng,p,m,k+1 = x(r)\ng,p,m,k −ηg(r)\ng,p,m,k\n9:\nend for\n10:\nend for\n11:\nGroup model: x(r)\ng,p+1 = x(r)\ng,p,M,K\n12:\nend for\n13:\nend for\n14:\nGlobal model: x(r+1) = x(r)\nG,P\n15: end for\nA.2\nWALL-CLOCK TIME ANALYSIS",
+    "source": "iclr_2026.pdf",
+    "page": 14,
+    "chunk_id": 2
+  },
+  {
+    "text": "odel: x(r+1) = x(r)\nG,P\n15: end for\nA.2\nWALL-CLOCK TIME ANALYSISodel: x(r+1) = x(r)\nG,P\n15: end for\nA.2\nWALL-CLOCK TIME ANALYSISTo bridge the gap between convergence rounds and real-world training latency, we analyze the total\nwall-clock time T. This is defined as the sum of computation and communication overheads: T =\nTComp + TComm. Let S denote the model size, τx the computation time for a node x, and rA→B the\ntransmission rate from node A to B.\nSingle-Layer Analysis. In a single-layer setting with M clients, the Star topology is limited by\nthe straggler, i.e., T Star = maxm{\nS\nr0→m + τm +\nS",
+    "source": "iclr_2026.pdf",
+    "page": 14,
+    "chunk_id": 3
+  },
+  {
+    "text": "s limited by\nthe straggler, i.e., T Star = maxm{\nS\nr0→m + τm +\nSs limited by\nthe straggler, i.e., T Star = maxm{\nS\nr0→m + τm +\nSrm→0 }, where the index 0 denotes the aggregation\nserver. Conversely, the Ring topology operates sequentially, accumulating latencies: T Ring =\nS\nr0→1 +\n14",
+    "source": "iclr_2026.pdf",
+    "page": 14,
+    "chunk_id": 4
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nP\nm τm + PM\nm=2\nS\nrm−1→m +\nS\nrM→0 . While T Star theoretically offers O(1) communication scaling\nversus T Ring’s O(M), this assumes unlimited bandwidth, which rarely holds in edge scenarios.\nHFL Topology Analysis. The total wall-clock time for HFL over R global rounds, with P group\nrounds, can be unified as:\nTtotal = R · (Tinter + P · Tintra) ,\n(24)\nwhere Tinter represents the wall-clock time for inter-group updates, and Tintra represents the wall-",
+    "source": "iclr_2026.pdf",
+    "page": 15,
+    "chunk_id": 0
+  },
+  {
+    "text": "ck time for inter-group updates, and Tintra represents the wall-ck time for inter-group updates, and Tintra represents the wall-clock time for intra-group updates. Table 3 details these components for four topologies.\nTable 3: Wall-clock Time Components for HFL Topologies. Here G denotes the Intra-group Aggre-\ngation Server (Group Server).\nTopology\nInter-Group Time (Tinter)\nIntra-Group Time (Tintra)\nStar-Star\nmax\ng\n\u001a\nS\nr0→g\n+ τg +\nS\nrg→0\n\u001b\nmax\ng,m\n\u001a\nS\nrG→m,g\n+ τg,m +\nS\nrm→G,g\n\u001b\nStar-Ring\nmax\ng\n\u001a\nS\nr0→g\n+ τg +\nS\nrg→0\n\u001b\nmax\ng\n(\nS\nrG→1,g\n+\nM\nX\nm=1\nτg,m +\nM\nX\nm=2\nS\nrm−1→m,g\n+\nS\nrM→G,g\n)\nRing-Star\nS\nr0→1\n+\nG\nX\ng=1\nτg +\nG\nX\ng=2\nS\nrg−1→g\n+",
+    "source": "iclr_2026.pdf",
+    "page": 15,
+    "chunk_id": 1
+  },
+  {
+    "text": "+\nS\nrM→G,g\n)\nRing-Star\nS\nr0→1\n+\nG\nX\ng=1\nτg +\nG\nX\ng=2\nS\nrg−1→g\n+\n+\nS\nrM→G,g\n)\nRing-Star\nS\nr0→1\n+\nG\nX\ng=1\nτg +\nG\nX\ng=2\nS\nrg−1→g\n+S\nrG→0\nG\nX\ng=1\nmax\nm\n\u001a\nS\nrG→m,g\n+ τg,m +\nS\nrm→G,g\n\u001b\nRing-Ring\nS\nr0→1\n+\nG\nX\ng=1\nτg +\nG\nX\ng=2\nS\nrg−1→g\n+\nS\nrG→0\nG\nX\ng=1\n(\nS\nrG→1,g\n+\nM\nX\nm=1\nτg,m +\nM\nX\nm=2\nS\nrm−1→m,g\n+\nS\nrM→G,g\n)\nBandwidth Constraints and Practical Latency. Theoretically, the star topology offers advan-\ntages in parallel computation; however, in real-world scenarios, it often fails to achieve the\nidea O(1) level of parallelism.\nIn HFL, the total wall-clock time faces challenges similar to",
+    "source": "iclr_2026.pdf",
+    "page": 15,
+    "chunk_id": 2
+  },
+  {
+    "text": "m.\nIn HFL, the total wall-clock time faces challenges similar tom.\nIn HFL, the total wall-clock time faces challenges similar tothose in single-layer FL. Many studies (Lim et al., 2021; Liu et al., 2025) on HFL communi-\ncation optimization highlight that bandwidth resources are diluted as the number of users in-\ncreases, e.g., rm−1→m,g\n∼\nRg\nM , where Rg represents the total bandwidth resources of the\ngroup server and M denotes the total number of clients connected to that server. Substituting\nthis relationship into the total wall-clock time for the Star-Star topology yields T Star−Star\ntotal\n=\nR\n\u0010\nmaxG\ng=1\n\b 2SG\nR\n+ τg\n\t\n+ P · maxG",
+    "source": "iclr_2026.pdf",
+    "page": 15,
+    "chunk_id": 3
+  },
+  {
+    "text": "ields T Star−Star\ntotal\n=\nR\n\u0010\nmaxG\ng=1\n\b 2SG\nR\n+ τg\n\t\n+ P · maxGields T Star−Star\ntotal\n=\nR\n\u0010\nmaxG\ng=1\n\b 2SG\nR\n+ τg\n\t\n+ P · maxGg=1\nn\nmaxM\nm=1\nn\n2SM\nRg + τg,m\noo\u0011\n, where the communication\nlatency in the upper layer approaches O(G), while the communication overhead in the lower layer\napproaches O(M). In particular, the uplink transmission rate of workers is a major bottleneck in the\ntraining process that can lead to the straggler’s effect (Lim et al., 2020). Therefore, in bandwidth-\nconstrained real-world scenarios, the ring topology remains a competitive option.\nB\nEXPERIMENTAL DETAILS AND ADDITIONAL RESULTS\nB.1",
+    "source": "iclr_2026.pdf",
+    "page": 15,
+    "chunk_id": 4
+  },
+  {
+    "text": "titive option.\nB\nEXPERIMENTAL DETAILS AND ADDITIONAL RESULTS\nB.1titive option.\nB\nEXPERIMENTAL DETAILS AND ADDITIONAL RESULTS\nB.1DETAILED EXPERIMENTAL SETTINGS\nAll batch normalization layers in the models (ResNet-18, VGG-9, ResNet-10) are removed to ensure\ncleaner validation of our convergence bounds. We use SGD with a constant learning rate, zero\nmomentum, mini-batch size of 20, and gradient clipping. The global model is updated over R =\n5000 rounds (R = 1000 for SST-2), with each group performing P = 1 group-level updates and\neach client conducting K = 2 local steps.",
+    "source": "iclr_2026.pdf",
+    "page": 15,
+    "chunk_id": 5
+  },
+  {
+    "text": "roup-level updates and\neach client conducting K = 2 local steps.roup-level updates and\neach client conducting K = 2 local steps.Data Partitioning Schemes. We simulate a hierarchical setup with N = 100 clients evenly dis-\ntributed across G = 10 groups, unless otherwise specified, and examine four data partitioning\nschemes (Fang et al., 2024): (1) IID within groups & IID between groups, where data is uniformly\nand randomly partitioned at both group and client levels; (2) Non-IID within groups & IID between\ngroups, where groups receive statistically similar data distributions, but clients within each group",
+    "source": "iclr_2026.pdf",
+    "page": 15,
+    "chunk_id": 6
+  },
+  {
+    "text": "ically similar data distributions, but clients within each groupically similar data distributions, but clients within each groupare assigned non-IID partitions via a Dirichlet distribution with parameter α = 0.1 (α = 0.3 for\nSST-2); (3) IID within groups & Non-IID between groups, where clients within a group share IID\ndata, but group-level distributions differ significantly, again using a Dirichlet split across groups;\n15",
+    "source": "iclr_2026.pdf",
+    "page": 15,
+    "chunk_id": 7
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nand (4) Non-IID within groups & Non-IID between groups, where the entire dataset is partitioned\nusing a Dirichlet distribution, resulting in heterogeneous data at both intra- and inter-group levels.\n2\n1\n0.5\n0.2\n0.05\n0.01\nLearning Rate\n0\n20\n40\n60\n80\nTest Top1 Accuracy (%)\nStar-Star\nStar-Ring\nRing-Star\nRing-Ring\nFigure 4: Test accuracies on CIFAR-10\nafter training for 1000 training rounds\nwith different learning rates.",
+    "source": "iclr_2026.pdf",
+    "page": 16,
+    "chunk_id": 0
+  },
+  {
+    "text": "training for 1000 training rounds\nwith different learning rates.training for 1000 training rounds\nwith different learning rates.Learning Rate Tuning. The learning rate (η) was tuned\nindividually for each of the four topologies to ensure they\nall operate near their optimal convergence speed. Taking\nCIFAR-10 as an example, we explored a search space of\n{2, 1, 0.5, 0.2, 0.05, 0.01} to identify the optimal η. We\nfound the optimal learning rates to be 1.0 for Star-Star,\n0.2 for both Star-Ring and Ring-Star, and 0.05 for Ring-\nRing\nB.2\nCOMPARISON WITH SINGLE-TIER FL\nTo evaluate the performance of HFL against traditional",
+    "source": "iclr_2026.pdf",
+    "page": 16,
+    "chunk_id": 1
+  },
+  {
+    "text": "E-TIER FL\nTo evaluate the performance of HFL against traditionalE-TIER FL\nTo evaluate the performance of HFL against traditionalsingle-tier architectures, we conducted comparative ex-\nperiments using the CIFAR-10 dataset with a ResNet-18\nmodel. The total number of clients was set to N = 100.\nWe compared our Star-Star and Ring-Ring HFL (G=10, M=10) against standard single-tier FedAvg\n(denoted as Parallel FL, PFL) and single-tier Sequential FL (Li & Lyu, 2023) (denoted as SFL).\n(a) IID\n(b) Non-IID\nFigure 5:\nComparison with Single-Tier FL on\nCIFAR-10 Dataset\nThe models were trained for 5,000 global\nrounds.",
+    "source": "iclr_2026.pdf",
+    "page": 16,
+    "chunk_id": 2
+  },
+  {
+    "text": "IFAR-10 Dataset\nThe models were trained for 5,000 global\nrounds.IFAR-10 Dataset\nThe models were trained for 5,000 global\nrounds.The experimental results reveal\ndistinct convergence correlations:\n(i) PFL\ndemonstrates a convergence speed and final\naccuracy highly similar to that of the Star-Star\nHFL topology across both partitions; (ii) SFL\nexhibits performance characteristics compa-\nrable to that of the Ring-Ring HFL topology.\nThe convergence curves for the IID and Non-\nIID settings are visualized in Figure 5. These\ncomparisons empirically validate that the hi-\nerarchical structure itself does not inherently",
+    "source": "iclr_2026.pdf",
+    "page": 16,
+    "chunk_id": 3
+  },
+  {
+    "text": "ate that the hi-\nerarchical structure itself does not inherentlyate that the hi-\nerarchical structure itself does not inherentlyaccelerate convergence speed.\nInstead, the\nconvergence characteristics of HFL topolo-\ngies strongly correlate with the synchronization mechanism (parallel vs. sequential) of their single-\ntier analogues. Consequently, the primary advantage of HFL lies in mitigating communication bot-\ntlenecks at the central server rather than improving convergence rates.\nB.3\nEFFECT OF GROUP ROUNDS P AND LOCAL STEPS K\nTo investigate the impact of computation and communication frequencies on convergence dynamics,",
+    "source": "iclr_2026.pdf",
+    "page": 16,
+    "chunk_id": 4
+  },
+  {
+    "text": "mputation and communication frequencies on convergence dynamics,mputation and communication frequencies on convergence dynamics,we evaluated all four HFL topologies on the CIFAR-10 dataset (Non-IID) under varying numbers\nof local steps (K ∈{2, 5, 10}) and group rounds (P ∈{1, 2, 5}). The convergence curves over the\nfirst 3,000 global rounds are presented in Figure 6 below.\nEffect of Local Steps. Comparing the curves with fixed P = 1 (Green: K = 2, Blue: K = 5, Or-\nange: K = 10), we observe that increasing K consistently accelerates the initial convergence speed",
+    "source": "iclr_2026.pdf",
+    "page": 16,
+    "chunk_id": 5
+  },
+  {
+    "text": "reasing K consistently accelerates the initial convergence speedreasing K consistently accelerates the initial convergence speedacross all topologies. Increasing K increases the computational density per communication round,\nallowing the model to traverse the loss landscape further before aggregation. This confirms that\ngreater local computation can effectively trade off communication rounds for faster convergence,\nparticularly in the initial phase.\nEffect of Group Rounds. Comparing the curves with fixed K = 2 (Green: P = 1, Red: P = 2,\nPurple: P = 5), increasing the number of group-level updates yields a substantial improvement in",
+    "source": "iclr_2026.pdf",
+    "page": 16,
+    "chunk_id": 6
+  },
+  {
+    "text": "umber of group-level updates yields a substantial improvement inumber of group-level updates yields a substantial improvement inconvergence efficiency. Increasing P allows for more thorough intra-group refinement before global\nsynchronization. For Ring-Star, a larger P means the model circulates among groups more times\n(or effectively allows more groups to participate sequentially if viewed as virtual steps), drastically\nreducing inter-group heterogeneity impact per global round.\n16",
+    "source": "iclr_2026.pdf",
+    "page": 16,
+    "chunk_id": 7
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nWhile both increasing P and K improve convergence speed, increasing group rounds (P) generally\nprovides a stronger acceleration effect than increasing local steps (K) in our experiments. This\nsuggests that for HFL, promoting consensus at the group level (via larger P) is a highly effective\nstrategy for combating heterogeneity, especially for architectures with a Ring-based top tier.\n(a) Star-Star\n(b) Star-Ring\n(c) Ring-Star\n(d) Ring-Ring",
+    "source": "iclr_2026.pdf",
+    "page": 17,
+    "chunk_id": 0
+  },
+  {
+    "text": "op tier.\n(a) Star-Star\n(b) Star-Ring\n(c) Ring-Star\n(d) Ring-Ringop tier.\n(a) Star-Star\n(b) Star-Ring\n(c) Ring-Star\n(d) Ring-RingFigure 6: Impact of P and K on Convergence of Four HFL Topologies\nC\nNOTATIONS\nTable 4 summarizes the notations appearing in this paper.\nTable 4: Key notations for HFL algorithm.\nSymbol\nDescription\nR, r\nnumber, index of training rounds\nG, g\nnumber, index of groups\nM, m\nnumber, index of clients in each group\nK, k\nnumber, index of local update steps\nη\nlearning rate (or stepsize)\n˜η\neffective learning rate\nL\nL-smoothness constant (Assumption 1)\nσ",
+    "source": "iclr_2026.pdf",
+    "page": 17,
+    "chunk_id": 1
+  },
+  {
+    "text": "effective learning rate\nL\nL-smoothness constant (Assumption 1)\nσeffective learning rate\nL\nL-smoothness constant (Assumption 1)\nσupper bound on variance of stochastic gradients at each client (Assumption 2)\nδ\nconstants in Assumption 3 to bound inter-group heterogeneity\nζg\nconstants in Assumption 4 to bound intra-group heterogeneity\nF/Fg/Fg, m\nglobal objective/group p objective/local objective of client m in group p\nx(r)\nglobal model parameters in the r-th round\nx(r)\ng,p,m,k\nlocal model parameters of the m-th client after k local steps in the g-th group\nafter p group steps in the r-th round\ng(r)\ng,p,m,k\ng(r)\ng,p,m,k := ∇fg,m(x(r)",
+    "source": "iclr_2026.pdf",
+    "page": 17,
+    "chunk_id": 2
+  },
+  {
+    "text": "steps in the r-th round\ng(r)\ng,p,m,k\ng(r)\ng,p,m,k := ∇fg,m(x(r) steps in the r-th round\ng(r)\ng,p,m,k\ng(r)\ng,p,m,k := ∇fg,m(x(r)g,p,m,k; ξ) denotes the stochastic gradients of Fg,m\nregarding x(r)\ng,p,m,k\nD\nPROOF OF THEOREM1\nIn the following proof, we consider the full participation setting with a fixed execution order. Specif-\nically, all G groups and all M clients participate in every training round. We assume the execution\nfollows a deterministic sequence, corresponding to the natural indices {1, 2, . . . , G} for groups and\n{1, 2, . . . , M} for clients, without random permutation.\n17",
+    "source": "iclr_2026.pdf",
+    "page": 17,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nD.1\nFIND THE PER-ROUND RECURSION\nLemma 1. Let Assumptions 1, 2 hold. If the learning rate satisfies η ≤\n1\n2Lc0GP MK , then\nE\nh\nF(x(r+1)) −F(x(r))\ni\n≤−1\n2ηc0GMPKE[∥∇F(x(r))∥2] + η2Lc0\n2GMPKσ2\n+ 1\n2ηL2c0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\nE\n\u0014\r\r\rx(r)\ng,p,m,k −x(r)\r\r\r\n2\u0015\n,\nwhere c0 is a topology-dependent coefficient that takes values of 1/(GM), 1/G, 1/M, and 1 for the\nStar-Star, Star-Ring, Ring-Star, and Ring-Ring topologies, respectively.",
+    "source": "iclr_2026.pdf",
+    "page": 18,
+    "chunk_id": 0
+  },
+  {
+    "text": "r, Star-Ring, Ring-Star, and Ring-Ring topologies, respectively.r, Star-Ring, Ring-Star, and Ring-Ring topologies, respectively.Proof. In the following, we focus on a single training round, and hence we drop the superscripts r\nfor a while, e.g., writing xg,p,m,k to replace x(r)\ng,p,m,k. Specifically, we would like to use x to replace\nx(r)\n1,0,1,0. Unless otherwise stated, the expectation is conditioned on x(r).\nStarting from the smoothness of F (applying Assumption 1, ∥∇F(x) −∇F(y)∥≤L∥x −y∥), we\nhave\nE [F (x + ∆x) −F (x)] ≤E ⟨∇F (x) , ∆x⟩\n|\n{z\n}\nA1\n+ L\n2 E∥∆x∥2\n|\n{z\n}\nA2",
+    "source": "iclr_2026.pdf",
+    "page": 18,
+    "chunk_id": 1
+  },
+  {
+    "text": "+ ∆x) −F (x)] ≤E ⟨∇F (x) , ∆x⟩\n|\n{z\n}\nA1\n+ L\n2 E∥∆x∥2\n|\n{z\n}\nA2 + ∆x) −F (x)] ≤E ⟨∇F (x) , ∆x⟩\n|\n{z\n}\nA1\n+ L\n2 E∥∆x∥2\n|\n{z\n}\nA2The model updates within a single global round for the four topologies can be represented by a\nunified format,\n∆x = x(R+1) −x(R) = −c0η\nX\ng,p,m,k\ngg,p,m,k,\nwhere c0 denotes the topology-dependent coefficient as defined in Lemma 1.\nAfter substituting the overall updates ∆x, we can get A1\nE\nh\n⟨∇F(x(r)), ∆x(r)⟩\ni\n= E\n\"*\n∇F(x(r)), −ηc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\ng(r)\ng,p,m,k\n+#\n= E\n\"*\n∇F(x(r)), −ηc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m(x(r)\ng,p,m,k)\n+#\n= E\n\"*\n∇F(x(r)), −ηc0\nG\nX\ng=1\nP −1\nX\np=0\nM",
+    "source": "iclr_2026.pdf",
+    "page": 18,
+    "chunk_id": 2
+  },
+  {
+    "text": "Fg,m(x(r)\ng,p,m,k)\n+#\n= E\n\"*\n∇F(x(r)), −ηc0\nG\nX\ng=1\nP −1\nX\np=0\nMFg,m(x(r)\ng,p,m,k)\n+#\n= E\n\"*\n∇F(x(r)), −ηc0\nG\nX\ng=1\nP −1\nX\np=0\nMX\nm=1\nK−1\nX\nk=0\n\u0010\n∇Fg,m(x(r)\ng,p,m,k) −∇F(x(r))\n\u0011+#\n+ E\n\"*\n∇F(x(r)), −ηc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n∇F(x(r))\n+#\n= −ηc0GMPKE[∥∇F(x(r))∥2] + ηc0GMPKE\nhD\n∇F(x(r)),\nc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n\u0010\n∇Fg,m(x(r)\ng,p,m,k) −∇Fg,m(x(r))\n\u0011+#\n≤−ηc0GMPKE[∥∇F(x(r))∥2] + 1\n2ηc0GMPKE[∥∇F(x(r))∥2]\n−1\n2ηc0\n1\nGPMK E\n\r\r\r\r\r\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n\u0010\n∇Fg,m(x(r)\ng,p,m,k)\n\u0011\r\r\r\r\r\n2\n+ 1\n2ηc0GMPKE\n\n\n\r\r\r\r\rc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n\u0010\n∇Fg,m(x(r)\ng,p,m,k) −∇Fg,m(x(r))\n\u0011\r\r\r\r\r\n2\n\n18",
+    "source": "iclr_2026.pdf",
+    "page": 18,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n= −1\n2ηc0GMPKE[∥∇F(x(r))∥2]\n+ 1\n2ηc0GMPKE\n\r\r\r\r\rc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n\u0010\n∇Fg,m(x(r)\ng,p,m,k)−∇Fg,m(x(r))\n\u0011\r\r\r\r\r\n2\n−1\n2ηc0\n1\nGPMK E\n\r\r\r\r\r\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n\u0010\n∇Fg,m(x(r)\ng,p,m,k)\n\u0011\r\r\r\r\r\n2\n≤−1\n2ηc0GMPKE[∥∇F(x(r))∥2] + 1\n2ηL2c0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\nE\n\u0014\r\r\rx(r)\ng,p,m,k −x(r)\r\r\r\n2\u0015\n−1\n2ηc0\n1\nGPMK E\n\r\r\r\r\r\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n\u0010\n∇Fg,m(x(r)\ng,p,m,k)\n\u0011\r\r\r\r\r\n2\nwhere we use ⟨a, b⟩= 1\n2\n\u0000∥a∥2 + ∥b∥2 −∥a −b∥2\u0001",
+    "source": "iclr_2026.pdf",
+    "page": 19,
+    "chunk_id": 0
+  },
+  {
+    "text": ",p,m,k)\n\u0011\r\r\r\r\r\n2\nwhere we use ⟨a, b⟩= 1\n2\n\u0000∥a∥2 + ∥b∥2 −∥a −b∥2\u0001,p,m,k)\n\u0011\r\r\r\r\r\n2\nwhere we use ⟨a, b⟩= 1\n2\n\u0000∥a∥2 + ∥b∥2 −∥a −b∥2\u0001for the first inequality and use Jensen’s inequal-\nity, ∥Pn\ni=1 ai∥2 ≤n Pn\ni=1 ∥ai∥2, for the last inequality.\nNext, we bound the term A2,\n1\n2LE[∥∆x∥2] = 1\n2LE\n\n\n\r\r\r\r\rηc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\ng(r)\ng,p,m,k\n\r\r\r\r\r\n2\n\n≤η2LE\n\n\n\r\r\r\r\rc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n\u0010\ng(r)\ng,p,m,k −∇Fg,m(x(r)\ng,p,m,k)\n\u0011\r\r\r\r\r\n2\n\n+ η2LE\n\n\n\r\r\r\r\rc0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m(x(r)\ng,p,m,k)\n\r\r\r\r\r\n2\n.\nLet η ≤\n1\n2Lc0GMP K , we have\nE\nh\nF(x(r+1)) −F(x(r))\ni\n≤E\nh\n⟨∇F(x(r)), ∆x(r)⟩\ni\n+ 1",
+    "source": "iclr_2026.pdf",
+    "page": 19,
+    "chunk_id": 1
+  },
+  {
+    "text": ", we have\nE\nh\nF(x(r+1)) −F(x(r))\ni\n≤E\nh\n⟨∇F(x(r)), ∆x(r)⟩\ni\n+ 1 , we have\nE\nh\nF(x(r+1)) −F(x(r))\ni\n≤E\nh\n⟨∇F(x(r)), ∆x(r)⟩\ni\n+ 12LE[∥∆x(r)∥2]\n= −1\n2ηc0GMPKE[∥∇F(x(r))∥2] + η2Lc0\n2GMPKσ2\n+ 1\n2ηL2c0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\nE\n\u0014\r\r\rx(r)\ng,p,m,k −x(r)\r\r\r\n2\u0015\n−\n\u0000 1\n2 −Lc0GPMKη\n\u0001\nc0η\nGPMK\nE\n\r\r\r\r\r\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m(x(r)\ng,p,m,k)\n\r\r\r\r\r\n2\n≤−1\n2ηc0GMPKE[∥∇F(x(r))∥2] + η2Lc0\n2GMPKσ2\n+ 1\n2ηL2c0\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\nE\n\u0014\r\r\rx(r)\ng,p,m,k −x(r)\r\r\r\n2\u0015\n.\nWe define the client drift in HFL:\nEr :=\nG\nX\ng=1\nP −1\nX\np=0\nM\nX\nm=1\nK−1\nX\nk=0\nE∥x(r)\ng,p,m,k −x(r)∥\n2.\n19",
+    "source": "iclr_2026.pdf",
+    "page": 19,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nD.2\nPROOF OF THEOREM 1 FOR THE STAR-STAR CASE\nFor Star-Star,\nxg,p,m,k −x =\nk−1\nX\nk′=0\ngg,p,m,k′ +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\ngg,p′,m′,k′.\nTo bound Er, we first bound E∥xg,p,m,k −x∥2.\nE∥xg,p,m,k −x∥2\n= η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\ngg,p′,m′,k′∥2\n≤5η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\ngg,p′,m′,k′ −\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′)\n−\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) ∥2\n+5η2E∥\nk−1\nX",
+    "source": "iclr_2026.pdf",
+    "page": 20,
+    "chunk_id": 0
+  },
+  {
+    "text": "′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) ∥2\n+5η2E∥\nk−1\nX′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) ∥2\n+5η2E∥\nk−1\nXk′=0\n∇Fg,m (xg,p,m,k′)+\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) −\nk−1\nX\nk′=0\n∇Fg,m (x)\n−\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) ∥2\n+ 5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) −\nk−1\nX\nk′=0\n∇Fg (x)\n−\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) ∥2\n+ 5η2E∥\nk−1\nX\nk′=0\n∇Fg (x)+\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x)−\nk−1\nX\nk′=0\n∇F (x)−\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) ∥2\n+ 5η2E∥\nk−1\nX\nk′=0\n∇F (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)∥2,",
+    "source": "iclr_2026.pdf",
+    "page": 20,
+    "chunk_id": 1
+  },
+  {
+    "text": "k−1\nX\nk′=0\n∇F (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)∥2,k−1\nX\nk′=0\n∇F (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)∥2,where we apply the Jensen’s Inequality for the first inequality. The term E∥xg,p,m,k −x∥2 is de-\ncomposed into 5 components (e.g., local SGD noise, intra-group drift, inter-group drift, and global\nmodel discrepancy).\nBounding the first term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\ngg,p′,m′,k′ −\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′)\n−\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) ∥2\n≤10η2\nk−1\nX\nk′=0\nE∥gg,p,m,k′ −∇Fg,m (xg,p,m,k′)∥2\n+ 10η2\np−1\nX\np′=0\n1\nM 2",
+    "source": "iclr_2026.pdf",
+    "page": 20,
+    "chunk_id": 2
+  },
+  {
+    "text": "X\nk′=0\nE∥gg,p,m,k′ −∇Fg,m (xg,p,m,k′)∥2\n+ 10η2\np−1\nX\np′=0\n1\nM 2\nX\nk′=0\nE∥gg,p,m,k′ −∇Fg,m (xg,p,m,k′)∥2\n+ 10η2\np−1\nX\np′=0\n1\nM 2M\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg,p′,m′,k′ −∇Fg,m′ (xg,p′,m′,k′) ∥2\n20",
+    "source": "iclr_2026.pdf",
+    "page": 20,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n≤10η2kσ2 + 10η2 pK\nM σ2\nBounding the second term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′)\n−\nk−1\nX\nk′=0\n∇Fg,m (x) −\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) ∥2\n≤10η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (xg,p,m,k′) −∇Fg,m (x)∥2\n+ 10η2pMK\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (xg,p′,m′,k′) −∇Fg,m′ (x) ∥2\n≤10L2η2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2 + 10L2η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 21,
+    "chunk_id": 0
+  },
+  {
+    "text": "=0\nE∥xg,p,m,k′ −x∥2 + 10L2η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0=0\nE∥xg,p,m,k′ −x∥2 + 10L2η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0E∥xg,p′,m′,k′ −x∥2\nBounding the third term in the left-hand inequality,\n5η2E∥\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) −\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x)\n+\nk−1\nX\nk′=0\n∇Fg,m (x) −\nk−1\nX\nk′=0\n∇Fg (x) ∥2 ≤10η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (x) −∇Fg (x)∥2\nThe group objective function is defined as the aggregation of local functions, i.e., Fg\n=\n1\nM\nPM\nm′=1 Fg,m′. Consequently, the summation of the deviations of local gradients from the group\ngradient vanishes.",
+    "source": "iclr_2026.pdf",
+    "page": 21,
+    "chunk_id": 1
+  },
+  {
+    "text": "deviations of local gradients from the group\ngradient vanishes. deviations of local gradients from the group\ngradient vanishes.Bounding the fourth term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) −\nk−1\nX\nk′=0\n∇F (x) −\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) ∥2\n≤10η2k\nk−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2 + 10η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2\nBounding the fifth term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇F (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)∥2\n≤10η2k\nk−1\nX\nk′=0\nE∥∇F (x)∥2 + 10η2pMK\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2",
+    "source": "iclr_2026.pdf",
+    "page": 21,
+    "chunk_id": 2
+  },
+  {
+    "text": "(x)∥2 + 10η2pMK\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2 (x)∥2 + 10η2pMK\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2Substitute these terms into Er,\nEr ≤10η2\nX\ng,p,m,k\n \nkσ2 + pK\nM σ2 + L2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2\n21",
+    "source": "iclr_2026.pdf",
+    "page": 21,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ L2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2 + k\nk−1\nX\nk′=0\nE∥∇Fg,m (x) −∇Fg (x)∥2\nk\nk−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2 + pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2\nk\nk−1\nX\nk′=0\nE∥∇F (x)∥2 + pMK\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2\n!\nLet c1 =\n1\n1−10L2P 2K2η2 , we have\nEr ≤c110η2GPMK2σ2 + c110η2GP 2K2σ2 + c110η2GPMK3ζ2\n+ c110η2GPMK3δ2 + c110η2GP 3MK3δ2\n+ c110η2GPMK3∥∇F (x)∥2 + c110η2GP 3MK3∥∇F (x)∥2",
+    "source": "iclr_2026.pdf",
+    "page": 22,
+    "chunk_id": 0
+  },
+  {
+    "text": "c110η2GP 3MK3δ2\n+ c110η2GPMK3∥∇F (x)∥2 + c110η2GP 3MK3∥∇F (x)∥2 c110η2GP 3MK3δ2\n+ c110η2GPMK3∥∇F (x)∥2 + c110η2GP 3MK3∥∇F (x)∥2≤10c1η2GPMK2σ2 + 10c1η2GP 2K2σ2 + 10c1η2GPMK3ζ2 + 20c1η2GP 3MK3δ2\n+ 20c1η2GP 3MK3∥∇F (x)∥2\nAfter substituting Er into E[F(x(r+1)) −F(x(r))], we can obtain\nE[F(x(r+1)) −F(x(r))]\n≤−ηPK(1\n2 −10c1η2L2P 2K2)E[∥∇F(x(r))∥2] + η2L PK\nGM σ2\n+ 5c1η3L2PK2σ2 + 5c1η3L2 P 2K2\nM\nσ2 + 5c1η3L2PK3ζ2 + 10c1η3L2P 3K3δ2.\nLet c2 =\n1\n1\n2 −10c1η2L2P 2K2 , then\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≤c2\n\u0000F(x(0)) −F(x(R))\n\u0001\nηRPK\n+ c2ηL\n1\nGM σ2 + 5c1c2η2L2Kσ2\n+ 5c1c2η2L2 PK\nM σ2 + 5c1c2η2L2K2ζ2 + 10c1c2η2L2P 2K2δ2.\nLet ˜η = ηPK, and ˜η ≤\n1\n√",
+    "source": "iclr_2026.pdf",
+    "page": 22,
+    "chunk_id": 1
+  },
+  {
+    "text": "+ 5c1c2η2L2K2ζ2 + 10c1c2η2L2P 2K2δ2.\nLet ˜η = ηPK, and ˜η ≤\n1\n√ + 5c1c2η2L2K2ζ2 + 10c1c2η2L2P 2K2δ2.\nLet ˜η = ηPK, and ˜η ≤\n1\n√30L, we have\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nGPMK + L2˜η2σ2\nP 2K\n+ L2˜η2σ2\nPMK + L2˜η2ζ2\nP 2\n+ L2˜η2δ2\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+ (L2A2σ2)1/3\n(P 2KR2)1/3 + (L2A2σ2)1/3\n(PMKR2)1/3\n+ (L2A2ζ2)1/3\n(P 2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n\u0013\nwhere ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous iterations,\nand ≲hides universal constants.\nD.3\nPROOF OF THEOREM 1 FOR THE STAR-RING CASE\nFor Star-Ring,\nxg,p,m,k −x =\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 22,
+    "chunk_id": 2
+  },
+  {
+    "text": "Ring,\nxg,p,m,k −x =\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0Ring,\nxg,p,m,k −x =\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0gg,p,m′,k′ +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg,p′,m′,k′.\n22",
+    "source": "iclr_2026.pdf",
+    "page": 22,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nTo bound Er, we first bound E∥xg,p,m,k −x∥2.\nE∥xg,p,m,k −x∥2\n= η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\ngg,p,m′,k′ +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg,p′,m′,k′∥2\n≤5η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\ngg,p,m′,k′ +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg,p′,m′,k′ −\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′)\n−\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p,m′,k′) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) −\nk−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 23,
+    "chunk_id": 0
+  },
+  {
+    "text": "xg,p′,m′,k′) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) −\nk−1\nX\nk′=0xg,p′,m′,k′) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) −\nk−1\nX\nk′=0∇Fg,m (x) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p,m′,k′)\n−\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x)+\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) −\nk−1\nX\nk′=0\n∇Fg (x)\n−\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) ∥2\n+ 5η2E∥\nk−1\nX\nk′=0\n∇Fg (x) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) −\nk−1\nX\nk′=0\n∇F (x)",
+    "source": "iclr_2026.pdf",
+    "page": 23,
+    "chunk_id": 1
+  },
+  {
+    "text": "(x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) −\nk−1\nX\nk′=0\n∇F (x)(x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) −\nk−1\nX\nk′=0\n∇F (x)−\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) ∥2\n+ 5η2E∥\nk−1\nX\nk′=0\n∇F (x) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)∥2\nBounding the first term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\ngg,p,m′,k′ +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg,p′,m′,k′ −\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′)\n−\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p,m′,k′) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) ∥2\n≤15η2\nk−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 23,
+    "chunk_id": 2
+  },
+  {
+    "text": "′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) ∥2\n≤15η2\nk−1\nX\nk′=0′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) ∥2\n≤15η2\nk−1\nX\nk′=0E∥gg,p,m,k′ −∇Fg,m (xg,p,m,k′)∥2\n+ 15η2\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg,p,m′,k′ −∇Fg,m′ (xg,p,m′,k′) ∥2\n+ 15η2\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg,p′,m′,k′ −∇Fg,m′ (xg,p′,m′,k′) ∥2\n≤15η2kσ2 + 15η2mKσ2 + 15η2pMKσ2\n23",
+    "source": "iclr_2026.pdf",
+    "page": 23,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nBounding the second term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) −\nk−1\nX\nk′=0\n∇Fg,m (x) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p,m′,k′)\n−\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) ∥2\n≤15η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (xg,p,m,k′) −∇Fg,m (x)∥2\n+ 15η2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (xg,p,m′,k′) −∇Fg,m′ (x) ∥2\n+ 15η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 24,
+    "chunk_id": 0
+  },
+  {
+    "text": "p,m′,k′) −∇Fg,m′ (x) ∥2\n+ 15η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0p,m′,k′) −∇Fg,m′ (x) ∥2\n+ 15η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0E∥∇Fg,m′ (xg,p′,m′,k′) −∇Fg,m′ (x) ∥2\n≤15L2η2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2 + 15L2η2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\n+ 15L2η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\nBounding the third term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x)+\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) −\nk−1\nX\nk′=0\n∇Fg (x)\n−\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) ∥2\n≤15η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (x) −∇Fg (x)∥2 + 15η2mK\nm−1\nX\nm′=1\nK−1\nX",
+    "source": "iclr_2026.pdf",
+    "page": 24,
+    "chunk_id": 1
+  },
+  {
+    "text": "5η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (x) −∇Fg (x)∥2 + 15η2mK\nm−1\nX\nm′=1\nK−1\nX5η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (x) −∇Fg (x)∥2 + 15η2mK\nm−1\nX\nm′=1\nK−1\nXk′=0\nE∥∇Fg,m′ (x) −∇Fg (x)∥2\n+ 15η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (x) −∇Fg (x)∥2\nBounding the fourth term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg (x) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x)\n−\nk−1\nX\nk′=0\n∇F (x) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) ∥2\n≤15η2k\nk−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2 + 15η2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2\n+ 15η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2\n24",
+    "source": "iclr_2026.pdf",
+    "page": 24,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nBounding the fifth term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇F (x) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)∥2\n≤15η2k\nk−1\nX\nk′=0\nE∥∇F (x)∥2 + 15η2mK\np−1\nX\np′=0\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2\n+ 15η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2\nSubstitute these terms into Er,\nEr ≤15η2\nX\ng,p,m,k\n \nkσ2 + mKσ2 + pMKσ2 + L2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2\n+ L2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p,m′,k′ −x∥2 + L2pMK\np−1\nX\np′=0\nM\nX\nm′=1",
+    "source": "iclr_2026.pdf",
+    "page": 25,
+    "chunk_id": 0
+  },
+  {
+    "text": "X\nm′=1\nK−1\nX\nk′=0\nE∥xg,p,m′,k′ −x∥2 + L2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p,m′,k′ −x∥2 + L2pMK\np−1\nX\np′=0\nM\nX\nm′=1K−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\n+ k\nk−1\nX\nk′=0\nE∥∇Fg,m(x) −∇Fg(x)∥2 + mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′(x) −∇Fg(x)∥2\n+ k\nk−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2 + mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2\n+ pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2\n+ k\nk−1\nX\nk′=0\nE∥∇F(x)∥2 + mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2 + pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2\n!\n≤15η2GPMK2σ2 + 15η2GPM 2K2σ2 + 15η2GP 2M 2K2σ2\n+ 15η2GPMK3ζ2 + 15η2GPM 3K3ζ2 + 15η2GPMK3δ2\n+ 15η2GPM 3K3δ2 + 15η2GP 3M 3K3δ2 + 15η2GPMK3∥∇F (x)∥2",
+    "source": "iclr_2026.pdf",
+    "page": 25,
+    "chunk_id": 1
+  },
+  {
+    "text": "η2GPMK3δ2\n+ 15η2GPM 3K3δ2 + 15η2GP 3M 3K3δ2 + 15η2GPMK3∥∇F (x)∥2η2GPMK3δ2\n+ 15η2GPM 3K3δ2 + 15η2GP 3M 3K3δ2 + 15η2GPMK3∥∇F (x)∥2+ 15η2GPM 3K3∥∇F (x)∥2 + 15η2P 2M 2K2∥∇F (x)∥2 + 15L2P 2M 2K2η2Er\nLet c1 =\n1\n1−15L2P 2M 2K2η2 , we have\nEr ≤45c1η2GP 2M 2K2σ2 + 30c1η2GPM 3K3ζ2 + 45c1η2GP 3M 3K3δ2\n+ 45c1η2GP 3M 3K3∥∇F (x)∥2\nAfter substituting Er into E[F(x(r+1)) −F(x(r))], we can obtain\nE[F(x(r+1)) −F(x(r))]\n≤−ηMPK(1\n2 −45\n2 c1η2L2P 2M 2K2)E[∥∇F(x(r))∥2] + η2LPMK\nG\nσ2\n+ 45\n2 c1η3L2P 2M 2K2σ2 + 15c1η3L2PM 3K3ζ2 + 45\n2 c1η3L2P 3M 3K3δ2.\nLet c2 =\n1\n1\n2 −45\n2 c1η2L2P 2M 2K2 , then\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≤c2\n\u0000F(x(0)) −F(x(R))\n\u0001\nηRPMK",
+    "source": "iclr_2026.pdf",
+    "page": 25,
+    "chunk_id": 2
+  },
+  {
+    "text": "then\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≤c2\n\u0000F(x(0)) −F(x(R))\n\u0001\nηRPMK then\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≤c2\n\u0000F(x(0)) −F(x(R))\n\u0001\nηRPMK+ c2ηL 1\nGσ2 + 45\n2 c1c2η2L2PMKσ2\n25",
+    "source": "iclr_2026.pdf",
+    "page": 25,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 15c1c2η2L2M 2K2ζ2 + 45\n2 c1c2η2L2P 2M 2K2δ2.\nLet ˜η = ηPMK, and ˜η ≤\n1\n√\n60L, we have\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nGPMK + L2˜η2σ2\nPMK + L2˜η2ζ2\nP 2\n+ L2˜η2δ2\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+ (L2A2σ2)1/3\n(PMKR2)1/3 + (L2A2ζ2)1/3\n(P 2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n\u0013\nwhere ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous iterations,\nand ≲hides universal constants.\nD.4\nPROOF OF THEOREM 1 FOR THE RING-STAR CASE",
+    "source": "iclr_2026.pdf",
+    "page": 26,
+    "chunk_id": 0
+  },
+  {
+    "text": "iversal constants.\nD.4\nPROOF OF THEOREM 1 FOR THE RING-STAR CASEiversal constants.\nD.4\nPROOF OF THEOREM 1 FOR THE RING-STAR CASEFor Ring-Star,\nxg,p,m,k −x =\nk−1\nX\nk′=0\ngg,p,m,k′ +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg,p′,m′,k′ +\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg′,p′,m′,k′.\nTo bound Er, we first bound E∥xg,p,m,k −x∥2.\nE∥xg,p,m,k −x∥2\n= η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg,p′,m′,k′ +\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg′,p′,m′,k′∥2\n≤5η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg,p′,m′,k′ +\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg′,p′,m′,k′\n−\nk−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 26,
+    "chunk_id": 1
+  },
+  {
+    "text": "g′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg′,p′,m′,k′\n−\nk−1\nX\nk′=0g′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg′,p′,m′,k′\n−\nk−1\nX\nk′=0∇Fg,m (xg,p,m,k′) −\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m′ (xg,p′,m′,k′)\n−\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′,m′ (xg′,p′,m′,k′) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m′ (xg,p′,m′,k′)\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′,m′ (xg′,p′,m′,k′) −\nk−1\nX\nk′=0\n∇Fg,m (x)\n−\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m′ (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′,m′ (x) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x)+\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0",
+    "source": "iclr_2026.pdf",
+    "page": 26,
+    "chunk_id": 2
+  },
+  {
+    "text": "∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x)+\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x)+\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0∇Fg,m′ (x)+\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′,m′ (x)\n−\nk−1\nX\nk′=0\n∇Fg (x) −\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′ (x) ∥2\n+ 5η2E∥\nk−1\nX\nk′=0\n∇Fg (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg (x) +\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′ (x)\n26",
+    "source": "iclr_2026.pdf",
+    "page": 26,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n−\nk−1\nX\nk′=0\n∇F (x) −\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇F (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇F (x) ∥2\n+ 5η2E∥\nk−1\nX\nk′=0\n∇F (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇F (x) +\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇F (x)∥2\nBounding the first term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg,p′,m′,k′ +\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\ngg′,p′,m′,k′\n−\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) −\np−1",
+    "source": "iclr_2026.pdf",
+    "page": 27,
+    "chunk_id": 0
+  },
+  {
+    "text": "m=1\nK−1\nX\nk=0\ngg′,p′,m′,k′\n−\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) −\np−1\nm=1\nK−1\nX\nk=0\ngg′,p′,m′,k′\n−\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) −\np−1X\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m′ (xg,p′,m′,k′)\n−\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′,m′ (xg′,p′,m′,k′) ∥2\n≤15η2\nk−1\nX\nk′=0\nE∥gg,p,m,k′ −∇Fg,m (xg,p,m,k′)∥2\n+ 15η2\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg,p′,m′,k′ −∇Fg,m′ (xg,p′,m′,k′) ∥2\n+ 15η2\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM 2\nM\nX\nm=1\nK−1\nX\nk=0\nE∥gg′,p′,m′,k′ −∇Fg′,m′ (xg′,p′,m′,k′) ∥2\n≤15η2kσ2 + 15η2 pK\nM σ2 + 15η2 gPK\nM σ2\nBounding the second term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX",
+    "source": "iclr_2026.pdf",
+    "page": 27,
+    "chunk_id": 1
+  },
+  {
+    "text": "η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nXη2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nXk=0\n∇Fg,m′ (xg,p′,m′,k′)\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′,m′ (xg′,p′,m′,k′) −\nk−1\nX\nk′=0\n∇Fg,m (x)\n−\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m′ (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′,m′ (x) ∥2\n≤15η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (xg,p,m,k′) −∇Fg,m (x)∥2\n+ 15η2pMK\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (xg,p′,m′,k′) −∇Fg,m′ (x) ∥2\n+ 15η2gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (xg,p′,m′,k′) −∇Fg,m′ (x) ∥2\n≤15L2η2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2 + 15L2η2 pK\nM",
+    "source": "iclr_2026.pdf",
+    "page": 27,
+    "chunk_id": 2
+  },
+  {
+    "text": "∇Fg,m′ (x) ∥2\n≤15L2η2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2 + 15L2η2 pK\nM∇Fg,m′ (x) ∥2\n≤15L2η2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2 + 15L2η2 pK\nMp−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\n27",
+    "source": "iclr_2026.pdf",
+    "page": 27,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 15L2η2 gPK\nM\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\nBounding the third term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x)+\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg,m′ (x)+\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′,m′ (x)\n−\nk−1\nX\nk′=0\n∇Fg (x) −\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′ (x) ∥2\n≤15η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (x) −∇Fg (x)∥2\n+ 15η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 28,
+    "chunk_id": 0
+  },
+  {
+    "text": "∥∇Fg,m (x) −∇Fg (x)∥2\n+ 15η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0∥∇Fg,m (x) −∇Fg (x)∥2\n+ 15η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0E∥∇Fg,m′ (x) −∇Fg (x)∥2\n+ 15η2 gPK\nM\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg′,m′ (x) −∇Fg′ (x)∥2\nBounding the fourth term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg (x) +\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇Fg′ (x)\n−\nk−1\nX\nk′=0\n∇F (x) −\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇F (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇F (x) ∥2\n≤15η2k\nk−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2 + 15η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2",
+    "source": "iclr_2026.pdf",
+    "page": 28,
+    "chunk_id": 1
+  },
+  {
+    "text": "2 + 15η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥22 + 15η2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2+ 15η2 gPK\nM\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg′ (x) −∇F (x)∥2\nBounding the fifth term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇F (x) +\np−1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇F (x) +\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM\nM\nX\nm=1\nK−1\nX\nk=0\n∇F (x)∥2\n≤15η2k\nk−1\nX\nk′=0\nE∥∇F (x)∥2 + 15η2pMK\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2\n+ 15η2gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2\nSubstitute these terms into Er,\nEr ≤15η2\nX\ng,p,m,k\n \nkσ2 + pK\nM σ2 + gPK\nM σ2\n28",
+    "source": "iclr_2026.pdf",
+    "page": 28,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ L2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2 + L2 pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\n+ L2 gPK\nM\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2 + k\nk−1\nX\nk′=0\nE∥∇Fg,m(x) −∇Fg(x)∥2\n+ k\nk−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2 + pK\nM\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2\n+ gPK\nM\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2 + k\nk−1\nX\nk′=0\nE∥∇F(x)∥2\n+ pMK\np−1\nX\np′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2 + gPMK\ng−1\nX\ng′=1\nP −1\nX",
+    "source": "iclr_2026.pdf",
+    "page": 29,
+    "chunk_id": 0
+  },
+  {
+    "text": "′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2 + gPMK\ng−1\nX\ng′=1\nP −1\nX′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2 + gPMK\ng−1\nX\ng′=1\nP −1\nXp′=0\n1\nM 2\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2\n!\n≤15η2GPMK2σ2 + 15η2GP 2K2σ2 + 15η2G2P 2K2σ2\n+ 15η2GPMK3ζ2 + 15η2GPMK3δ2 + 15η2GP 3MK3δ2 + 15η2G3P 3MK3δ2\n+ 15η2GPMK3∥∇F (x)∥2 + 15η2GP 3MK3∥∇F (x)∥2 + 15η2G3P 3MK3∥∇F (x)∥2\n+ 15L2G2P 2K2η2Er\nLet c1 =\n1\n1−15L2G2P 2K2η2 , we have\nEr ≤15c1η2GPMK2σ2 + 30c1η2G2P 2K2σ2 + 15c1η2GPMK3ζ2 + 45c1η2G3P 3MK3δ2\n+ 45c1η2G3P 3MK3∥∇F (x)∥2\nAfter substituting Er into E[F(x(r+1)) −F(x(r))], we can obtain\nE[F(x(r+1)) −F(x(r))]\n≤−ηGPK(1\n2 −45\n2 c1η2L2G2P 2K2)E[∥∇F(x(r))∥2] + η2LGPK\nM",
+    "source": "iclr_2026.pdf",
+    "page": 29,
+    "chunk_id": 1
+  },
+  {
+    "text": "(x(r))]\n≤−ηGPK(1\n2 −45\n2 c1η2L2G2P 2K2)E[∥∇F(x(r))∥2] + η2LGPK\nM(x(r))]\n≤−ηGPK(1\n2 −45\n2 c1η2L2G2P 2K2)E[∥∇F(x(r))∥2] + η2LGPK\nMσ2\n+ 15\n2 c1η3L2GPK2σ2+15c1η3L2 G2P 2K2\nM\nσ2+ 15\n2 c1η3L2GPK3ζ2+ 45\n2 c1η3L2G3P 3K3δ2.\nLet c2 =\n1\n1\n2 −45\n2 c1η2L2G2P 2K2 , then\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≤c2\n\u0000F(x(0)) −F(x(R))\n\u0001\nηRGPK\n+ c2ηL 1\nM σ2 + 15\n2 c1c2η2L2Kσ2\n+15c1c2η2L2 GPK\nM\nσ2+ 15\n2 c1c2η2L2K2ζ2+ 45\n2 c1c2η2L2G2P 2K2δ2.\nLet ˜η = ηGPK, and ˜η ≤\n1\n√\n60L, we have\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nGPMK + L2˜η2σ2\nG2P 2K + L2˜η2σ2\nGPMK + L2˜η2ζ2\nG2P 2 + L2˜η2δ2.\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+\n(L2A2σ2)1/3\n(G2P 2KR2)1/3 +\n(L2A2σ2)1/3",
+    "source": "iclr_2026.pdf",
+    "page": 29,
+    "chunk_id": 2
+  },
+  {
+    "text": "R + (Lσ2A)1/2\n√\nGPMKR\n+\n(L2A2σ2)1/3\n(G2P 2KR2)1/3 +\n(L2A2σ2)1/3\nR + (Lσ2A)1/2\n√\nGPMKR\n+\n(L2A2σ2)1/3\n(G2P 2KR2)1/3 +\n(L2A2σ2)1/3(GPMKR2)1/3\n+ (L2A2ζ2)1/3\n(G2P 2R2)1/3 + (L2A2δ2)1/3\n(R2)1/3\n\u0013\nwhere ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous iterations,\nand ≲hides universal constants.\n29",
+    "source": "iclr_2026.pdf",
+    "page": 29,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nD.5\nPROOF OF THEOREM 1 FOR THE RING-RING CASE\nFor Ring-Ring,\nxg,p,m,k −x =\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\ngg,p,m′,k′ +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg,p′,m′,k′\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg′,p′,m′,k′.\nTo bound Er, we first bound E∥xg,p,m,k −x∥2.\nE∥xg,p,m,k −x∥2\n= η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\ngg,p,m′,k′ +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg,p′,m′,k′\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg′,p′,m′,k′∥2\n≤5η2E∥",
+    "source": "iclr_2026.pdf",
+    "page": 30,
+    "chunk_id": 0
+  },
+  {
+    "text": "g−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg′,p′,m′,k′∥2\n≤5η2E∥\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg′,p′,m′,k′∥2\n≤5η2E∥k−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\ngg,p,m′,k′ +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg,p′,m′,k′\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg′,p′,m′,k′ −\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p,m′,k′)\n−\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg′,p′,m′,k′) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p,m′,k′)\n+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) +\ng−1\nX\ng′=1\nP −1\nX",
+    "source": "iclr_2026.pdf",
+    "page": 30,
+    "chunk_id": 1
+  },
+  {
+    "text": "′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) +\ng−1\nX\ng′=1\nP −1\nX′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) +\ng−1\nX\ng′=1\nP −1\nXp′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg′,p′,m′,k′)\n−\nk−1\nX\nk′=0\n∇Fg,m (x) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)\n−\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg′,m′ (x) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x)+\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg′,m′ (x) −\nk−1\nX\nk′=0\n∇Fg (x) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x)\n−\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 30,
+    "chunk_id": 2
+  },
+  {
+    "text": "K−1\nX\nk′=0\n∇Fg (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nK−1\nX\nk′=0\n∇Fg (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0∇Fg′ (x) ∥2\n+ 5η2E∥\nk−1\nX\nk′=0\n∇Fg (x) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x)\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg′ (x) −\nk−1\nX\nk′=0\n∇F (x) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)\n30",
+    "source": "iclr_2026.pdf",
+    "page": 30,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n−\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) ∥2\n+5η2E∥\nk−1\nX\nk′=0\n∇F (x)+\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)∥2\nBounding the first term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\ngg,p,m,k′ +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\ngg,p,m′,k′ +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg,p′,m′,k′\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg′,p′,m′,k′ −\nk−1\nX",
+    "source": "iclr_2026.pdf",
+    "page": 31,
+    "chunk_id": 0
+  },
+  {
+    "text": "+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg′,p′,m′,k′ −\nk−1\nX+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk=0\ngg′,p′,m′,k′ −\nk−1\nXk′=0\n∇Fg,m (xg,p,m,k′) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p,m′,k′)\n−\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg′,p′,m′,k′) ∥2\n≤20η2\nk−1\nX\nk′=0\nE∥gg,p,m,k′ −∇Fg,m (xg,p,m,k′)∥2\n+ 20η2\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg,p,m′,k′ −∇Fg,m′ (xg,p,m′,k′) ∥2\n+ 20η2\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg,p′,m′,k′ −∇Fg,m′ (xg,p′,m′,k′) ∥2\n+ 20η2\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg′,p′,m′,k′ −∇Fg,m′ (xg′,p′,m′,k′) ∥2",
+    "source": "iclr_2026.pdf",
+    "page": 31,
+    "chunk_id": 1
+  },
+  {
+    "text": "′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg′,p′,m′,k′ −∇Fg,m′ (xg′,p′,m′,k′) ∥2′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥gg′,p′,m′,k′ −∇Fg,m′ (xg′,p′,m′,k′) ∥2≤20η2kσ2 + 20η2mKσ2 + 20η2pMKσ2 + 20η2gPMKσ2\nBounding the second term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (xg,p,m,k′) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p,m′,k′)\n+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg,p′,m′,k′) +\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (xg′,p′,m′,k′)\n−\nk−1\nX\nk′=0\n∇Fg,m (x) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x) −\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)\n−\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg′,m′ (x) ∥2\n≤20η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (xg,p,m,k′) −∇Fg,m (x)∥2",
+    "source": "iclr_2026.pdf",
+    "page": 31,
+    "chunk_id": 2
+  },
+  {
+    "text": "Fg′,m′ (x) ∥2\n≤20η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (xg,p,m,k′) −∇Fg,m (x)∥2Fg′,m′ (x) ∥2\n≤20η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (xg,p,m,k′) −∇Fg,m (x)∥2+ 20η2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (xg,p,m′,k′) −∇Fg,m′ (x) ∥2\n+ 20η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (xg,p′,m′,k′) −∇Fg,m′ (x) ∥2\n31",
+    "source": "iclr_2026.pdf",
+    "page": 31,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 20η2gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg′,m′ (xg′,p′,m′,k′) −∇Fg′,m′ (x) ∥2\n≤20L2η2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2 + 20L2η2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\n+ 20L2η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\n+ 20L2η2gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg′,p′,m′,k′ −x∥2\nBounding the third term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg,m (x)+\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 32,
+    "chunk_id": 0
+  },
+  {
+    "text": "m−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0m−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg,m′ (x)+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0∇Fg,m′ (x)\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg′,m′ (x) −\nk−1\nX\nk′=0\n∇Fg (x) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x)\n−\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg′ (x) ∥2\n≤20η2k\nk−1\nX\nk′=0\nE∥∇Fg,m (x) −∇Fg (x)∥2 + 20η2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (x) −∇Fg (x)∥2\n+ 20η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′ (x) −∇Fg (x)∥2\n+ 20η2gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg′,m′ (x) −∇Fg′ (x)∥2",
+    "source": "iclr_2026.pdf",
+    "page": 32,
+    "chunk_id": 1
+  },
+  {
+    "text": "X\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg′,m′ (x) −∇Fg′ (x)∥2X\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg′,m′ (x) −∇Fg′ (x)∥2Bounding the fourth term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇Fg (x) +\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x) +\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg (x)\n+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇Fg′ (x) −\nk−1\nX\nk′=0\n∇F (x) −\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)\n−\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) −\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x) ∥2\n≤20η2k\nk−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2 + 20η2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2\n+ 20η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2\n+ 20η2gPMK",
+    "source": "iclr_2026.pdf",
+    "page": 32,
+    "chunk_id": 2
+  },
+  {
+    "text": "MK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2\n+ 20η2gPMKMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg (x) −∇F (x)∥2\n+ 20η2gPMKg−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg′ (x) −∇F (x)∥2\n32",
+    "source": "iclr_2026.pdf",
+    "page": 32,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nBounding the fifth term in the left-hand inequality,\n5η2E∥\nk−1\nX\nk′=0\n∇F (x)+\nm−1\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)+\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)+\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\n∇F (x)∥2\n≤20η2k\nk−1\nX\nk′=0\nE∥∇F (x)∥2 + 20η2mK\np−1\nX\np′=0\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2\n+ 20η2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2 + 20η2gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F (x)∥2\nSubstitute these terms into Er,\nEr ≤20η2\nX\ng,p,m,k",
+    "source": "iclr_2026.pdf",
+    "page": 33,
+    "chunk_id": 0
+  },
+  {
+    "text": "E∥∇F (x)∥2\nSubstitute these terms into Er,\nEr ≤20η2\nX\ng,p,m,k\n \nE∥∇F (x)∥2\nSubstitute these terms into Er,\nEr ≤20η2\nX\ng,p,m,k\n kσ2 + mKσ2 + pMKσ2 + gPMKσ2 + L2k\nk−1\nX\nk′=0\nE∥xg,p,m,k′ −x∥2\n+ L2mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p,m′,k′ −x∥2 + L2pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg,p′,m′,k′ −x∥2\n+ L2gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥xg′,p′,m′,k′ −x∥2 + k\nk−1\nX\nk′=0\nE∥∇Fg,m(x) −∇Fg(x)∥2\n+ mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg,m′(x) −∇Fg(x)∥2 + k\nk−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2\n+ mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2 + pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇Fg(x) −∇F(x)∥2\n+ gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 33,
+    "chunk_id": 1
+  },
+  {
+    "text": "Fg(x) −∇F(x)∥2\n+ gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0Fg(x) −∇F(x)∥2\n+ gPMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0E∥∇Fg′(x) −∇F(x)∥2 + k\nk−1\nX\nk′=0\nE∥∇F(x)∥2\n+ mK\nm−1\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2 + pMK\np−1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2\n+ gpMK\ng−1\nX\ng′=1\nP −1\nX\np′=0\nM\nX\nm′=1\nK−1\nX\nk′=0\nE∥∇F(x)∥2\n!\n≤20η2GPMK2σ2 + 20η2GPM 2K2σ2 + 20η2GP 2M 2K2σ2 + 20η2G2P 2M 2K2σ2\n+ 20η2GPMK3ζ2 + 20η2GPM 3K3ζ2 + 20η2GPMK3δ2\n+ 20η2GPM 3K3δ2 + 20η2GP 3M 3K3δ2 + 20η2G3P 3M 3K3δ2\n+ 20η2GPMK3∥∇F (x)∥2 + 20η2GPM 3K3∥∇F (x)∥2 + 20η2GP 3M 3K3∥∇F (x)∥2\n+ 20η2G3P 3M 3K3∥∇F (x)∥2 + 20L2G2P 2M 2K2η2Er\nLet c1 =\n1\n1−20L2G2P 2M 2K2η2 , we have",
+    "source": "iclr_2026.pdf",
+    "page": 33,
+    "chunk_id": 2
+  },
+  {
+    "text": ")∥2 + 20L2G2P 2M 2K2η2Er\nLet c1 =\n1\n1−20L2G2P 2M 2K2η2 , we have)∥2 + 20L2G2P 2M 2K2η2Er\nLet c1 =\n1\n1−20L2G2P 2M 2K2η2 , we haveEr ≤80c1η2G2P 2M 2K2σ2 + 40c1η2GPM 3K3ζ2 + 80c1η2G3P 3M 3K3δ2\n+ 80c1η2G3P 3M 3K3∥∇F (x)∥2\nAfter substituting Er into E[F(x(r+1)) −F(x(r))], we can obtain\nE[F(x(r+1)) −F(x(r))]\n33",
+    "source": "iclr_2026.pdf",
+    "page": 33,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n≤−ηGPMK(1\n2 −40c1η2L2G2P 2M 2K2)E[∥∇F(x(r))∥2] + η2LGPMKσ2\n+ 40c1η3L2GP 2M 2K2σ2 + 20c1η3L2GPM 3K3ζ2 + 40c1η3L2G3P 3M 3K3δ2.\nLet c2 =\n1\n1\n2 −40c1η2L2G2P 2M 2K2 , then\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≤c2\n\u0000F(x(0)) −F(x(R))\n\u0001\nηRGPMK\n+ c2ηLσ2 + 40c1c2η2L2GPMKσ2\n+ 20c1c2η2L2M 2K2ζ2 + 40c1c2η2L2G2P 2M 2K2δ2.\nLet ˜η = ηGPMK, and ˜η ≤\n1\n10L, we have\nE[∥∇F(¯x(R))∥2] ≲A\n˜ηR +\nL˜ησ2\nGPMK + L2˜η2σ2\nGPMK + L2˜η2ζ2\nG2P 2 + L2˜η2δ2\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+",
+    "source": "iclr_2026.pdf",
+    "page": 34,
+    "chunk_id": 0
+  },
+  {
+    "text": "G2P 2 + L2˜η2δ2\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+\nG2P 2 + L2˜η2δ2\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (Lσ2A)1/2\n√\nGPMKR\n+(L2A2σ2)1/3\n(GPMKR2)1/3 + (L2A2ζ2)1/3\n(G2P 2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n\u0013\nwhere ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous iterations,\nand ≲hides universal constants.\nE\nPROOF OF THEOREM 2\nIn the following proof, we consider the partial client participation setting, specifically, selecting\npartial clients without replacement. So we assume that π1 = {π1(1), π1(2), . . . , π1(G)} is a per-",
+    "source": "iclr_2026.pdf",
+    "page": 34,
+    "chunk_id": 1
+  },
+  {
+    "text": ". So we assume that π1 = {π1(1), π1(2), . . . , π1(G)} is a per-. So we assume that π1 = {π1(1), π1(2), . . . , π1(G)} is a per-mutation of {1, 2, . . . , G}, π2 = {π2(1), π2(2), . . . , π2(M)} is a permutation of {1, 2, . . . , M} in\na certain training round. And only the first S2 selected clients π2 = {π2(1), π2(2), . . . , π2(S2)}\nwithin the first S1 selected groups {π1(1), π1(2), . . . , π1(S1)} will participate in this round. Unless\notherwise stated, we use E[·] to represent the expectation with respect to both types of randomness\n(i.e., sampling data samples ξ and sampling clients π2).\nE.1\nFIND THE PER-ROUND RECURSION",
+    "source": "iclr_2026.pdf",
+    "page": 34,
+    "chunk_id": 2
+  },
+  {
+    "text": "les ξ and sampling clients π2).\nE.1\nFIND THE PER-ROUND RECURSIONles ξ and sampling clients π2).\nE.1\nFIND THE PER-ROUND RECURSIONLemma 2. Let Assumptions 1, 2 hold. If the learning rate satisfies η ≤\n1\n5Lc0S1S2P K , then\nE\nh\nF(x(r+1)) −F(x(r))\ni\n≤−ηc0S1S2PK\n\u00121\n2 −5\n2ηLc0S1S2PK\n\u0013\nE[∥∇F(x(r))∥2]\n+ 5\n2η2Lc0\n2S1S2PKσ2 + 5\n2η2Lc0\n2S1P 2S2\n2K2ζ2 + 5\n2η2Lc0\n2S1\n2P 2S2K2δ2\n+ηL2c0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k−x(r)∥2].\nwhere c0 is a topology-dependent coefficient that takes values of 1/(S1S2), 1/S1, 1/S2, and 1 for\nthe Star-Star, Star-Ring, Ring-Star, and Ring-Ring topologies, respectively.\nProof.",
+    "source": "iclr_2026.pdf",
+    "page": 34,
+    "chunk_id": 3
+  },
+  {
+    "text": "-Ring, Ring-Star, and Ring-Ring topologies, respectively.\nProof.-Ring, Ring-Star, and Ring-Ring topologies, respectively.\nProof.E [F(x + ∆x) −F(x)] ≤E [⟨∇F(x), ∆x⟩] + 1\n2LE[∥∆x∥2].\n34",
+    "source": "iclr_2026.pdf",
+    "page": 34,
+    "chunk_id": 4
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nThe model updates within a single global round for the four topologies can be represented by a\nunified format,\n∆x(r) = x(r+1) −x(r) = −ηc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\ng(r)\nπ1(s1),p,π2(s2),k.\nAfter substituting the overall updates ∆x, we can get\nE\nh\n⟨∇F(x(r)), ∆x(r)⟩\ni\n= E\n\"*\n∇F(x(r)), −ηc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\ngπ1(s1),p,π2(s2),k\n+#\n= E\n\"*\n∇F(x(r)), −ηc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k)\n+#",
+    "source": "iclr_2026.pdf",
+    "page": 35,
+    "chunk_id": 0
+  },
+  {
+    "text": "−1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k)\n+# −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k)\n+#= E\n\"*\n∇F(x(r)), −ηc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k) −∇F(x(r))\n\u0011+#\n+ E\n\"*\n∇F(x(r)), −ηc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n∇F(x(r))\n+#\n= −ηc0S1S2PKE[∥∇F(x(r))∥2] + ηc0S1S2PKE\nhD\n∇F(x(r)),\nc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011+#\n≤−ηc0S1S2PKE[∥∇F(x(r))∥2] + 1\n2ηc0S1S2PKE[∥∇F(x(r))∥2]\n+ 1\n2ηc0S1S2PKE\n\"\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),p,π2(s2),k(x(r)\ns1,p,s2,k)",
+    "source": "iclr_2026.pdf",
+    "page": 35,
+    "chunk_id": 1
+  },
+  {
+    "text": "X\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),p,π2(s2),k(x(r)\ns1,p,s2,k)\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),p,π2(s2),k(x(r)\ns1,p,s2,k)−∇Fπ1(s1),p,π2(s2),k(x(r))\n\u0011\r\r\r\n2\u0015\n= −1\n2ηc0S1S2PKE[∥∇F(x(r))∥2]\n+ 1\n2ηc0S1S2PKE\n\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k)−∇Fπ1(s1),π2(s2)(x(r))\n\u0011\r\r\r\r\r\n2\n≤−1\n2ηc0S1S2PKE[∥∇F(x(r))∥2] + 1\n2ηL2c0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE\n\u0014\r\r\rx(r)\ns1,p,s2,k −x(r)\r\r\r\n2\u0015\nFor the remaining term, we have\n1\n2LE[∥∆x∥2]\n= 1\n2LE\n\n\n\r\r\r\r\rηc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\ng(r)\nπ1(s1),p,π2(s2),k\n\r\r\r\r\r\n2\n\n≤5\n2η2LE\n\n\n\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0",
+    "source": "iclr_2026.pdf",
+    "page": 35,
+    "chunk_id": 2
+  },
+  {
+    "text": "\n≤5\n2η2LE\n\n\n\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\n≤5\n2η2LE\n\n\n\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\u0010\ng(r)\nπ1(s1),p,π2(s2),k −∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k)\n\u0011\r\r\r\r\r\n2\n\n+ 5\n2LE\n\n\n\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\r\r\r\r\r\n2\n\n35",
+    "source": "iclr_2026.pdf",
+    "page": 35,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 5\n2η2LE\n\n\n\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 5\n2η2LE\n\n\n\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)) −∇F(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 5\n2η2LE\n\n\n\r\r\r\r\rc0\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\n∇F(x(r))\n\r\r\r\r\r\n2\n\n≤5\n2η2Lc0\n2S1S2PKσ2\n+ 5\n2η2L3c0S1S2PK\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n+ 5\n2η2Lc0\n2S1P 2S2\n2K2ζ2\n+ 5\n2η2Lc0\n2S1",
+    "source": "iclr_2026.pdf",
+    "page": 36,
+    "chunk_id": 0
+  },
+  {
+    "text": "x(r)\ns1,p,s2,k −x(r)∥2]\n+ 5\n2η2Lc0\n2S1P 2S2\n2K2ζ2\n+ 5\n2η2Lc0\n2S1x(r)\ns1,p,s2,k −x(r)∥2]\n+ 5\n2η2Lc0\n2S1P 2S2\n2K2ζ2\n+ 5\n2η2Lc0\n2S12P 2S2K2δ2\n+ 5\n2η2Lc0\n2S1\n2S2\n2P 2K2E[∥∇F(x(r))∥2].\nLet η ≤\n1\n5Lc0S1S2P K , we have\nE\nh\nF(x(r+1)) −F(x(r))\ni\n≤E\nh\n⟨∇F(x(r)), ∆x(r)⟩\ni\n+ 1\n2LE[∥∆x(r)∥2]\n= −ηc0S1S2PK\n\u00121\n2 −5\n2ηLc0S1S2PK\n\u0013\nE[∥∇F(x(r))∥2]\n+ 5\n2η2Lc0\n2S1S2PKσ2 + 5\n2η2Lc0\n2S1P 2S2\n2K2ζ2 + 5\n2η2Lc0\n2S1\n2P 2S2K2δ2\n+ηL2c0\n\u00121\n2 + 5\n2ηLc0S1S2PK\n\u0013\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k−x(r)∥2]\n≤−ηc0S1S2PK\n\u00121\n2 −5\n2ηLc0S1S2PK\n\u0013\nE[∥∇F(x(r))∥2]\n+ 5\n2η2Lc0\n2S1S2PKσ2 + 5\n2η2Lc0\n2S1P 2S2\n2K2ζ2 + 5\n2η2Lc0\n2S1\n2P 2S2K2δ2\n+ηL2c0\nS1\nX\ns1=1",
+    "source": "iclr_2026.pdf",
+    "page": 36,
+    "chunk_id": 1
+  },
+  {
+    "text": "2η2Lc0\n2S1P 2S2\n2K2ζ2 + 5\n2η2Lc0\n2S1\n2P 2S2K2δ2\n+ηL2c0\nS1\nX\ns1=12η2Lc0\n2S1P 2S2\n2K2ζ2 + 5\n2η2Lc0\n2S1\n2P 2S2K2δ2\n+ηL2c0\nS1\nX\ns1=1P −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k−x(r)∥2].\nE.2\nPROOF OF THEOREM 2 FOR THE STAR-STAR CASE\nFor Star-Star,\nx(r)\ns1,p,s2,k −x(r) = −η\nk−1\nX\nk′=0\ngπ1(s1),p,π2(s2),k′ −η\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\ngπ1(s1),p′,π2(s′\n2),k′.\nWe first bound E[∥x(r)\ns1,p,s2,k −x(r)∥2].\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n= E\n\n\n\r\r\r\r\r\r\nη\nk−1\nX\nk′=0\ngπ1(s1),p,π2(s2),k′ + η\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\ngπ1(s1),p′,π2(s′\n2),k′\n\r\r\r\r\r\r\n2\n\n36",
+    "source": "iclr_2026.pdf",
+    "page": 36,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n≤10η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\ngπ1(s1),p,π2(s2),k′ −∇Fπ1(s1),π2(s2)(x(r)\ns1,p′,s2,k′)\n\u0011\r\r\r\r\r\n2\n\n+ 10η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\ngπ1(s1),p′,π2(s′\n2),k′ −∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p′,s′\n2,k′)\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 10η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p′,s2,k′) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 10η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p′,s2,k′) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n",
+    "source": "iclr_2026.pdf",
+    "page": 37,
+    "chunk_id": 0
+  },
+  {
+    "text": "),π2(s2)(x(r)\ns1,p′,s2,k′) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n),π2(s2)(x(r)\ns1,p′,s2,k′) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n+ 10η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 10η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 10η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 10η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 10η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\n2\n\n+ 10η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\n2\n\n≤10η2kσ2 + 10η2p 1",
+    "source": "iclr_2026.pdf",
+    "page": 37,
+    "chunk_id": 1
+  },
+  {
+    "text": "S2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\n2\n\n≤10η2kσ2 + 10η2p 1\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\n2\n\n≤10η2kσ2 + 10η2p 1S2\nKσ2\n+ 10η2k\nk−1\nX\nk′=0\nL2E[∥x(r)\ns1,p,s2,k′ −x(r)∥2]+10η2pK\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\nL2E[∥x(r)\ns1,p′,s′\n2,k′ −x(r)∥2]\n+ 10η2k2ζ2 + 10η2p2 1\nS2\nK2ζ2\n+ 10η2k2δ2 + 10η2p2K2δ2\n+ 10η2k2E[∥∇F(x(r))∥2] + 10η2p2K2E[∥∇F(x(r))∥2].\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤10η2S1PS2K2σ2+10η2S1P 2K2σ2\n+ 20η2L2P 2K2\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n37",
+    "source": "iclr_2026.pdf",
+    "page": 37,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 10η2S1PS2K3ζ2 + 10η2S1P 3K3ζ2\n+ 20η2S1P 3S2K3δ2\n+ 20η2S1P 3S2K3E[∥∇F(x(r))∥2].\nLet c1 =\n1\n1−20η2L2P 2K2 ,\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤10c1η2S1PS2K2σ2 + 10c1η2S1P 2K2σ2\n+ 10c1η2S1PS2K3ζ2 + 10c1η2S1P 3K3ζ2 + 20c1η2S1P 3S2K3δ2\n+ 20c1η2S1P 3S2K3E[∥∇F(x(r))∥2]\nE\nh\nF(x(r+1)) −F(x(r))\ni\n≤−ηPK\n\u00121\n2 −1\n2ηLPK −20c1η2L2P 2K2\n\u0013\nE[∥∇F(x(r))∥2]\n+ 5\n2η2L 1\nS1\nP 1\nS2\nKσ2 + 10c1η3L2PK2σ2 + 10c1η3L2P 2 1\nS2\nK2σ2\n+ 5\n2η2LP 2 1\nS2",
+    "source": "iclr_2026.pdf",
+    "page": 38,
+    "chunk_id": 0
+  },
+  {
+    "text": "S2\nKσ2 + 10c1η3L2PK2σ2 + 10c1η3L2P 2 1\nS2\nK2σ2\n+ 5\n2η2LP 2 1\nS2\nS2\nKσ2 + 10c1η3L2PK2σ2 + 10c1η3L2P 2 1\nS2\nK2σ2\n+ 5\n2η2LP 2 1\nS2K2ζ2 + 10c1η3L2PK3ζ2 + 10c1η3L2P 3 1\nS2\nK3ζ2\n+ 5\n2η2L 1\nS1\nP 2K2δ2 + 20c1η3L2P 3K3δ2\nLet c2 =\n1\n1\n2 −5\n2 ηLP K−20c1η2L2P 2K2 ,\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≲c2(F(x(0)) −F(x(R)))\nηRPK\n+ c2ηL 1\nS1\n1\nS2\nσ2 + c1c2η2L2Kσ2\n+ c2ηLP 1\nS2\nKζ2 + c1c2η2L2P 1\nS2\nKσ2 + c1c2η2L2K2ζ2\n+ c2ηL 1\nS1\nPKδ2 + c1c2η2L2P 2 1\nS2\nK2ζ2 + c1c2η2L2P 2K2δ2.\nLet ˜η = ηPK and ˜η ≤\n1\n10L,\nE[∥∇F(¯x(R))∥2] ≲F(x(0)) −F(x(R))\n˜ηR\n+\nL˜ησ2\nS1PS2K + L˜ηζ2\nS2\n+ L˜ηδ2\nS1\n+ L2˜η2σ2\nP 2K\n+ L2˜η2σ2\nPS2K + L2˜η2ζ2\nP 2\n+ L2˜η2ζ2\nS2\n+ L2˜η2δ2.",
+    "source": "iclr_2026.pdf",
+    "page": 38,
+    "chunk_id": 1
+  },
+  {
+    "text": "2˜η2σ2\nP 2K\n+ L2˜η2σ2\nPS2K + L2˜η2ζ2\nP 2\n+ L2˜η2ζ2\nS2\n+ L2˜η2δ2.2˜η2σ2\nP 2K\n+ L2˜η2σ2\nPS2K + L2˜η2ζ2\nP 2\n+ L2˜η2ζ2\nS2\n+ L2˜η2δ2.E[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (LAσ2)1/2\n√S1PS2KR + (LAζ2)1/2\n√S2R\n+ (LAδ2)1/2\n√S1R\n+ (L2A2σ2)1/3\n(P 2KR2)1/3 + (L2A2σ2)1/3\n(PS2KR2)1/3 + (L2A2ζ2)1/3\n(P 2R2)1/3\n+ (L2A2ζ2)1/3\n(S2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n\u0013\nwhere ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous iterations,\nand ≲hides universal constants.\n38",
+    "source": "iclr_2026.pdf",
+    "page": 38,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nE.3\nPROOF OF THEOREM 2 FOR THE STAR-RING CASE\nFor Star-Ring,\nx(r)\ns1,p,s2,k −x(r) = −η\nk−1\nX\nk′=0\ngπ1(s1),p,π2(s2),k′ −η\np−1\nX\np′=0\n1\nS2\nS2\nX\ns2=1\nK−1\nX\nk′=0\ngπ1(s1),p′,π2(s′\n2),k′\n−η\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\ngπ1(s1),p′,π2(s′\n2),k′.\nWe first bound E[∥x(r)\ns1,p,s2,k −x(r)∥2].\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\ngπ1(s1),p,π2(s2),k′ −∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k′)\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010",
+    "source": "iclr_2026.pdf",
+    "page": 39,
+    "chunk_id": 0
+  },
+  {
+    "text": ",s2,k′)\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010,s2,k′)\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010gπ1(s1),p,π2(s′\n2),k′ −∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p,s′\n2,k′)\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\ngπ1(s1),p′,π2(s′\n2),k′ −∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p′,s′\n2,k′)\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k′) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p,s′\n2,k′) −∇Fπ1(s1),π2(s′\n2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)",
+    "source": "iclr_2026.pdf",
+    "page": 39,
+    "chunk_id": 1
+  },
+  {
+    "text": "p−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)s1,p′,s′\n2,k′) −∇Fπ1(s1),π2(s′\n2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n39",
+    "source": "iclr_2026.pdf",
+    "page": 39,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\n2\n\n≤15η2kσ2 + 15η2s2Kσ2 + 15η2pS2Kσ2\n+ 15η2L2k\nk−1\nX\nk′=0\nE[∥x(r)\ns1,p,s2,k′ −x(r)∥2]\n+ 15η2L2s2K\ns2\nX\ns′\n2=1\nk−1\nX\nk′=0\nE[∥x(r)\ns1,p,s′\n2,k′ −x(r)∥2]\n+ 15η2L2ps2K\np−1\nX\np′=0\nS2\nX\ns′",
+    "source": "iclr_2026.pdf",
+    "page": 40,
+    "chunk_id": 0
+  },
+  {
+    "text": "=0\nE[∥x(r)\ns1,p,s′\n2,k′ −x(r)∥2]\n+ 15η2L2ps2K\np−1\nX\np′=0\nS2\nX\ns′=0\nE[∥x(r)\ns1,p,s′\n2,k′ −x(r)∥2]\n+ 15η2L2ps2K\np−1\nX\np′=0\nS2\nX\ns′2=1\nK−1\nX\nk′=0\nE[∥x(r)\ns1,p′,s′\n2,k′ −x(r)∥2]\n+ 15η2k2ζ2 + 15η2s2K2ζ2 + 15η2p2S2K2ζ2\n+ 15η2k2ζ2\n2 + 15η2s2\n2K2δ2 + 15η2p2s2\n2K2δ2\n+ 15η2K2E[∥∇F(x(r))∥2] + 15η2s2\n2K2E[∥∇F(x(r))∥2] + 15η2p2S2\n2K2E[∥∇F(x(r))∥2].\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤45η2S1P 2S2\n2K2σ2\n+ 45η2L2P 2S2\n2K2\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n+ 45η2S1P 3S2\n2K3ζ2\n+ 45η2S1P 3S3\n2K3δ2\n+ 45η2S1P 3S3\n2K3E[∥∇F(x(r))∥2].\nLet c1 =\n1\n1−45η2L2P 2S2\n2K2 ,\nS1\nX\ns1=1\nP1\nX\np=0\nS2\nX",
+    "source": "iclr_2026.pdf",
+    "page": 40,
+    "chunk_id": 1
+  },
+  {
+    "text": "x(r))∥2].\nLet c1 =\n1\n1−45η2L2P 2S2\n2K2 ,\nS1\nX\ns1=1\nP1\nX\np=0\nS2\nXx(r))∥2].\nLet c1 =\n1\n1−45η2L2P 2S2\n2K2 ,\nS1\nX\ns1=1\nP1\nX\np=0\nS2\nXs2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤45c1η2S1P 2S2\n2K2σ2 + 45c1η2S1P 3S2\n2K3ζ2 + 45c1η2S1P 3S3\n2K3δ2\n+ 45c1η2S1P 3S3\n2K3E[∥∇F(x(r))∥2].\nLet c2 =\n1\n1\n2 −5\n2 ηLP S2K−45c1η2L2P 2S2\n2K2 ,\n1\nR\nR−1\nX\nk=0\nE[∥∇F(x(r))∥2] ≤c2\nF(x(0)) −F(x(R))\nηRPS2K\n40",
+    "source": "iclr_2026.pdf",
+    "page": 40,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 5\n2c2ηL 1\nS1\nσ2 + 45c1c2η2L2PS2Kσ2\n+ 5\n2c2ηLPKζ2 + 45c1c2η2L2P 2S2K2ζ2\n+ 5\n2c2ηL 1\nS1\nPS2Kδ2 + 45c1c2η2L2P 2S2\n2K2δ2.\nLet ˜η = ηPS2K and ˜η ≤\n1\n45L,\nE[∥∇F(¯x(R))∥2] ≲F(x(0)) −F(x(R))\n˜ηR\n+\nL˜ησ2\nS1PS2K + L˜ηζ2\nS2\n+ L˜ηδ2\nS1\n+ L2˜η2σ2\nPS2K + L2˜η2ζ2\nS2\n+ L2˜η2δ2.\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (LAσ2)1/2\n√S1PS2KR + (LAζ2)1/2\n√S2R\n+ (LAδ2)1/2\n√S1R\n+ (L2A2σ2)1/3\n(PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n\u0013",
+    "source": "iclr_2026.pdf",
+    "page": 41,
+    "chunk_id": 0
+  },
+  {
+    "text": ")1/3\n(PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n\u0013)1/3\n(PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3\n+ (L2A2δ2)1/3\n(R2)1/3\n\u0013where ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous iterations,\nand ≲hides universal constants.\nE.4\nPROOF OF THEOREM 2 FOR THE RING-STAR CASE\nFor Ring-Star,\nx(r)\ns1,p,s2,k −x(r) = −η\nk−1\nX\nk′=0\ng(r)\ns1,p,s2,k′ −η\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\ng(r)\ns1,p′,s′\n2,k′\n−η\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\ng(r)\ns′\n1,p′,s2,k′.\nWe first bound E[∥x(r)\ns1,p,s2,k −x(r)∥2].\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\ng(r)",
+    "source": "iclr_2026.pdf",
+    "page": 41,
+    "chunk_id": 1
+  },
+  {
+    "text": "].\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\ng(r)].\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\ng(r)s1,p,s2,k′ −∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k′)\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\ng(r)\ns1,p′,s′\n2,k′ −∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p′,s′\n2,k′)\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\n\u0010\ng(r)\ns′\n1,p′,s2,k′ −∇Fπ1(s′\n1),π2(s′\n2)(x(r)\ns′\n1,p′,s′\n2,k′)\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k′) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010",
+    "source": "iclr_2026.pdf",
+    "page": 41,
+    "chunk_id": 2
+  },
+  {
+    "text": "\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p′,s′\n2,k′) −∇Fπ1(s1),π2(s′\n2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n41",
+    "source": "iclr_2026.pdf",
+    "page": 41,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s′\n1),π2(s′\n2)(x(r)\ns′\n1,p′,s′\n2,k′) −∇Fπ1(s′\n1),π2(s′\n2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s′\n1),π2(s′\n2)(x(r)) −∇Fπ1(s′",
+    "source": "iclr_2026.pdf",
+    "page": 42,
+    "chunk_id": 0
+  },
+  {
+    "text": "1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s′\n1),π2(s′\n2)(x(r)) −∇Fπ1(s′1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s′\n1),π2(s′\n2)(x(r)) −∇Fπ1(s′1)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s′\n1)(x(r)) −∇F(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\n2\n\n+ 15η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0",
+    "source": "iclr_2026.pdf",
+    "page": 42,
+    "chunk_id": 1
+  },
+  {
+    "text": "\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nk−1\nX\nk′=0∇F(x(r))\n\r\r\r\r\r\r\n2\n\n≤15η2Kσ2 + 15η2p 1\nS2\nKσ2 + 15η2s1P 1\nS2\nKσ2\n+ 15η2L2k\nk−1\nX\nk′=0\nE[∥x(r)\ns1,p,s2,k′ −x(r)∥2]\n+ 15η2L2p\np−1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK\nK−1\nX\nk′=0\nE[∥x(r)\ns1,p′,s′\n2,k′ −x(r)∥2]\n+ 15η2L2s1\ns1\nX\ns′\n1=1\nP\nP −1\nX\np′=0\n1\nS2\nS2\nX\ns′\n2=1\nK\nK−1\nX\nk′=0\nE[∥x(r)\ns′\n1,p′,s′\n2,k′ −x(r)∥2]\n+ 15η2k2ζ2 + 15η2p2 1\ns2\nK2ζ2 + 15η2s2\n1p2 1\ns2\nK2ζ2\n+ 15η2K2s2\n2 + 15η2p2K2s2\n2 + 15η2s2\n1p2K2s2\n2\n+ 15η2K2E[∥∇F(x(r))∥2] + 15η2p2K2E[∥∇F(x(r))∥2] + 15η2s2\n1p2K2E[∥∇F(x(r))∥2].\n42",
+    "source": "iclr_2026.pdf",
+    "page": 42,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nS1\nX\ns1=1\nP1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤15η2S1PS2K2σ2 + 30η2S2\n1P 2K2σ2\n+ 45η2S2\n1P 2K2\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n+ 15η2S1PS2K3ζ2 + 30η2S3\n1P 3K3ζ2\n+ 45η2S2\n1P 3S2K3δ2\n+ 45η2S3\n1P 3S2K3E[∥∇F(x(r))∥2].\nLet c1 =\n1\n1−45η2L2S2\n1P 2K2 ,\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤15c1η2S1PS2K2σ2 + 30c1η2S2\n1P 2K2σ2\n+ 15c1η2S1PS2K3ζ2 + 30c1η2S3\n1P 3K3ζ2\n+ 45c1η2S2",
+    "source": "iclr_2026.pdf",
+    "page": 43,
+    "chunk_id": 0
+  },
+  {
+    "text": "c1η2S2\n1P 2K2σ2\n+ 15c1η2S1PS2K3ζ2 + 30c1η2S3\n1P 3K3ζ2\n+ 45c1η2S2c1η2S2\n1P 2K2σ2\n+ 15c1η2S1PS2K3ζ2 + 30c1η2S3\n1P 3K3ζ2\n+ 45c1η2S21P 3S2K3δ2 + 45c1η2S3\n1P 3S2K3E[∥∇F(x(r))∥2].\nE[F(x(r+1)) −F(x(r))]\n≤−ηS1PK\n\u00121\n2 −5\n2ηLS1PK −45c1η2L2S2\n1P 2K2\n\u0013\nE[∥∇F(x(r))∥2]\n+ 5\n2η2LS1P 1\nS2\nKσ2 + 15c1η3L2S1PK2σ2 + 30c1η3L2S2\n1P 2 1\nS2\nK2σ2\n+ 5\n2η2LS2\n1P 2 1\nS2\nK2ζ2 + 15c1η3L2S1PK3ζ2 + 30c1η3L2S3\n1P 3 1\nS2\nK3ζ2\n+ 5\n2η2LS1P 2K2δ2 + 45c1η3L2S2\n1P 3K3δ2.\nLet c2 =\n1\n1\n2 −5\n2 ηLS1pK−45c1c2η2L2S2\n1P 2K2 ,\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≤c2E[F(x(0)) −F(x(R))]\nηRS1PK\n+ 5\n2c2ηL 1\nS2\nσ2 + 15c1c2η2L2Kσ2 + 30c1c2η2L2S1P 1\nS2\nKσ2\n+ 5\n2c2ηLS1P 1\nS2",
+    "source": "iclr_2026.pdf",
+    "page": 43,
+    "chunk_id": 1
+  },
+  {
+    "text": "S2\nσ2 + 15c1c2η2L2Kσ2 + 30c1c2η2L2S1P 1\nS2\nKσ2\n+ 5\n2c2ηLS1P 1\nS2S2\nσ2 + 15c1c2η2L2Kσ2 + 30c1c2η2L2S1P 1\nS2\nKσ2\n+ 5\n2c2ηLS1P 1\nS2Kζ2+15c1c2η2L2K2ζ2+30c1c2η2L2S2\n1P 2 1\nS2\nK2ζ2\n+ 5\n2c2ηLPKδ2 + 45c1c2η2L2S1P 2K2δ2.\nLet ˜η = ηS1PK and ˜η ≤\n1\n15L,\nE[∥∇F(¯x(R))∥2] ≲F(x(0)) −F(x(R))\n˜ηR\n+\nL˜ησ2\nS1PS2K + L˜ηζ2\nS2\n+ L˜ηδ2\nS1\n+ L2˜η2σ2\nS1\n2P 2K + L2˜η2σ2\nS1PS2K + L2˜η2ζ2\nS1\n2P 2 + L2˜η2ζ2\nS2\n+ L2˜η2δ2\nS1\n.\n43",
+    "source": "iclr_2026.pdf",
+    "page": 43,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (LAσ2)1/2\n√S1PS2KR + (LAζ2)1/2\n√S2R\n+ (LAδ2)1/2\n√S1R\n+\n(L2A2σ2)1/3\n(S2\n1P 2KR2)1/3\n+\n(L2A2σ2)1/3\n(S1PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2\n1P 2R2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3 + (L2A2δ2)1/3\n(S1R2)1/3\n\u0013\nwhere ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous iterations,\nand ≲hides universal constants.\nE.5\nPROOF OF THEOREM 2 FOR THE RING-RING CASE\nFor Ring-Ring,\nx(r)\ns1,p,s2,k −x(r) = −η\nk−1\nX\nk′=0\ng(r)",
+    "source": "iclr_2026.pdf",
+    "page": 44,
+    "chunk_id": 0
+  },
+  {
+    "text": "NG CASE\nFor Ring-Ring,\nx(r)\ns1,p,s2,k −x(r) = −η\nk−1\nX\nk′=0\ng(r)NG CASE\nFor Ring-Ring,\nx(r)\ns1,p,s2,k −x(r) = −η\nk−1\nX\nk′=0\ng(r)s1,p,s2,k′ −η\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\ng(r)\ns1,p,s′\n2,k′\n−η\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\ng(r)\ns1,p′,s′\n2,k′ −η\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\ng(r)\ns′\n1,p′,s′\n2,k′.\nWe first bound E[∥x(r)\ns1,p,s2,k −x(r)∥2].\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤20η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\ng(r)\ns1,p,s2,k′ −∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k′)\n\u0011\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\ng(r)\ns1,p,s′\n2,k′ −∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p,s′\n2,k′)\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX",
+    "source": "iclr_2026.pdf",
+    "page": 44,
+    "chunk_id": 1
+  },
+  {
+    "text": "\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nXk′=0\n\u0010\ng(r)\ns1,p′,s′\n2,k′ −∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p′,s′\n2,k′)\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\ng(r)\ns′\n1,p′,s′\n2,k′ −∇Fπ1(s′\n1),π2(s′\n2)(x(r)\ns′\n1,p′,s′\n2,k′)\n\u0011\n\r\r\r\r\r\r\n2\n\n≤20η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)\ns1,p,s2,k′) −∇Fπ1(s1),π2(s2)(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p,s′\n2,k′) −∇Fπ1(s1),π2(s′\n2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010",
+    "source": "iclr_2026.pdf",
+    "page": 44,
+    "chunk_id": 2
+  },
+  {
+    "text": "2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010∇Fπ1(s1),π2(s′\n2)(x(r)\ns1,p′,s′\n2,k′) −∇Fπ1(s1),π2(s′\n2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s′\n1),π2(s′\n2)(x(r)\ns′\n1,p′,s′\n2,k′) −∇Fπ1(s′\n1),π2(s′\n2)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n≤20η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\r\r\r\r\r\n2\n\n44",
+    "source": "iclr_2026.pdf",
+    "page": 44,
+    "chunk_id": 3
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1),π2(s′\n2)(x(r)) −∇Fπ1(s1)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s′\n1),π2(s′\n2)(x(r)) −∇Fπ1(s′\n1)(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n≤20η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010",
+    "source": "iclr_2026.pdf",
+    "page": 45,
+    "chunk_id": 0
+  },
+  {
+    "text": "F(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010F(x(r))\n\u0011\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s1)(x(r)) −∇F(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n\u0010\n∇Fπ1(s′\n1)(x(r)) −∇F(x(r))\n\u0011\n\r\r\r\r\r\r\n2\n\n≤20η2E\n\n\n\r\r\r\r\r\nk−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\np−1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\n2\n\n+ 20η2E\n\n\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))",
+    "source": "iclr_2026.pdf",
+    "page": 45,
+    "chunk_id": 1
+  },
+  {
+    "text": "\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\n\r\r\r\r\r\r\ns1\nX\ns′\n1=1\nP −1\nX\np′=0\nS2\nX\ns′\n2=1\nK−1\nX\nk′=0\n∇F(x(r))\r\r\r\r\r\r\n2\n\n≤20η2kσ2 + 20η2s2Kσ2 + 20η2pS2Kσ2 + 20η2s1PS2Kσ2\n+ 20η2L2k\nk−1\nX\nk′=0\nE[∥x(r)\ns1,p,s2,k′ −x(r)∥2]\n+ 20η2L2(s2 −1)K\ns2−1\nX\ns′\n2=1\nK−1\nX\nk′=0\nE[∥x(r)\ns1,p,s′\n2,k′ −x(r)∥2]\n+ 20η2L2p\np−1\nX\np′=0\nS2\nS2\nX\ns′\n2=1\nK\nK−1\nX\nk′=0\nE[∥x(r)\ns1,p′,s′\n2,k′ −x(r)∥2]\n+ 20η2L2(s1 −1)\ns1−1\nX\ns′\n1=1\nP\nP −1\nX\np′=0\nS2\nS2\nX\ns′\n2=1\nK\nK−1\nX\nk=0\nE[∥x(r)\ns′\n1,p′,s′\n2,k′ −x(r)∥2]\n45",
+    "source": "iclr_2026.pdf",
+    "page": 45,
+    "chunk_id": 2
+  },
+  {
+    "text": "Published as a conference paper at ICLR 2026\n+ 20η2k2ζ2 + 20η2(s2 −1)K2ζ2 + 20η2p2S2K2ζ2 + 20η2(s1 −1)P 2S2K2ζ2\n+ 20η2k2δ2 + 20η2(s2 −1)K2δ2 + 20η2p2S2\n2K2δ2 + 20η2(s1 −1)P 2S2\n2K2δ2\n+ 20η2k2E[∥∇F(x(r))∥2] + 20η2(s2 −1)K2E[∥∇F(x(r))∥2]\n+ 20˜η2p2S2\n2K2E[∥∇F(x(r))∥2] + 20˜η2(s1 −1)2P 2S2\n2K2E[∥∇F(x(r))∥2].\nLet c1 =\n1\n1−80η2S2\n1P 2S2\n2K2 ,\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)\ns1,p,s2,k −x(r)∥2]\n≤80c1η2S2\n1P 2S2\n2K2σ2\n+ 80c1η2S2\n1P 2S2\n2K2\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)",
+    "source": "iclr_2026.pdf",
+    "page": 46,
+    "chunk_id": 0
+  },
+  {
+    "text": "η2S2\n1P 2S2\n2K2\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)η2S2\n1P 2S2\n2K2\nS1\nX\ns1=1\nP −1\nX\np=0\nS2\nX\ns2=1\nK−1\nX\nk=0\nE[∥x(r)s1,p,s2,k −x(r)∥2]\n+ 80c1η2S3\n1P 3S2\n2K3ζ2\n+ 80c1η2S2\n1P 3S3\n2K3δ2\n+ 80c1η2S3\n1P 3S3\n2K3E[∥∇F(x(r))∥2].\nE[F(x(r+1)) −F(x(r))]\n≤−ηS1PS2K\n\u00121\n2 −5\n2ηLS1PS2K −80c1c2η2L2S2\n1P 2S2\n2K2\n\u0013\nE[∥∇F(x(r))∥2]\n+ 5\n2η2LS1PS2Kσ2 + 80c1η3L2S2\n1P 2S2\n2K2σ2\n+ 5\n2η2LS2\n1P 2S2K2ζ2 + 80c1η3L2S3\n1P 3S2\n2K3ζ2\n+ 5\n2η2LS1P 2S2\n2K2δ2 + 80c1η3L2S2\n1P 3S3\n2K3δ2.\nLet c2 =\n1\n1\n2 −5\n2 ηLS1P S2K−80c1c2η3L2S2\n1P 2S2\n2K2 ,\n1\nR\nR−1\nX\nr=0\nE[∥∇F(x(r))∥2] ≤c2\n\u0000F(x(0)) −F(x(R))\n\u0001\nηRS1PS2K\n+ 5\n2c2ηLσ2 + 80c1c2η2L2S1PS2Kσ2\n+ 5",
+    "source": "iclr_2026.pdf",
+    "page": 46,
+    "chunk_id": 1
+  },
+  {
+    "text": "F(x(0)) −F(x(R))\n\u0001\nηRS1PS2K\n+ 5\n2c2ηLσ2 + 80c1c2η2L2S1PS2Kσ2\n+ 5F(x(0)) −F(x(R))\n\u0001\nηRS1PS2K\n+ 5\n2c2ηLσ2 + 80c1c2η2L2S1PS2Kσ2\n+ 52c2ηLS1PKζ2 + 80c1c2η2L2S2\n1P 2S2K2ζ2\n+ 5\n2c2ηLPS2Kδ2 + 80c1c2η2L2S1P 2S2\n2K2δ2.\nLet ˜η = ηS1PS2K and ˜η ≤\n1\n20L,\nE[∥∇F(¯x(R))∥2] ≲F(x(0)) −F(x(R))\n˜ηR\n+\nL˜ησ2\nS1PS2K + L˜ηζ2\nS2\n+ L˜ηδ2\nS1\n+ L2˜η2σ2\nS1PS2K + L2˜η2ζ2\nS2\n+ L2˜η2δ2\nS1\n.\nE[∥∇F(¯x(R))∥2] = O\n\u0012LA\nR + (LAσ2)1/2\n√S1PS2KR + (LAζ2)1/2\n√S2R\n+ (LAδ2)1/2\n√S1R\n+\n(L2A2σ2)1/3\n(S1PS2KR2)1/3 + (L2A2ζ2)1/3\n(S2R2)1/3\n+ (L2A2δ2)1/3\n(S1R2)1/3\n\u0013\nwhere ¯xR is defined as a model uniformly sampled from the x(0), . . . , x(R−1) of previous iterations,",
+    "source": "iclr_2026.pdf",
+    "page": 46,
+    "chunk_id": 2
+  },
+  {
+    "text": "ly sampled from the x(0), . . . , x(R−1) of previous iterations,ly sampled from the x(0), . . . , x(R−1) of previous iterations,and ≲hides universal constants.\n46",
+    "source": "iclr_2026.pdf",
+    "page": 46,
+    "chunk_id": 3
+  }
+]
