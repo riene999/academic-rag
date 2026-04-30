@@ -43,12 +43,14 @@ def enqueue_pdf_index_job(
     pdf_path: str,
     source_name: str,
     config_path: str = DEFAULT_CONFIG_PATH,
+    delete_after: bool = True,
 ) -> Any:
     return queue.enqueue(
         index_pdf_job,
         pdf_path,
         source_name,
         config_path,
+        delete_after,
         job_id=job_id,
         meta={"filename": source_name},
         job_timeout="30m",
@@ -57,7 +59,12 @@ def enqueue_pdf_index_job(
     )
 
 
-def index_pdf_job(pdf_path: str, source_name: str, config_path: str = DEFAULT_CONFIG_PATH) -> dict:
+def index_pdf_job(
+    pdf_path: str,
+    source_name: str,
+    config_path: str = DEFAULT_CONFIG_PATH,
+    delete_after: bool = True,
+) -> dict:
     path = Path(pdf_path)
     logger.info("Starting PDF index job: {}", source_name)
     try:
@@ -72,7 +79,8 @@ def index_pdf_job(pdf_path: str, source_name: str, config_path: str = DEFAULT_CO
             "index_path": pipeline.config.vector_store.index_path,
         }
     finally:
-        try:
-            path.unlink(missing_ok=True)
-        except OSError as exc:
-            logger.warning("Failed to remove uploaded PDF {}: {}", path, exc)
+        if delete_after:
+            try:
+                path.unlink(missing_ok=True)
+            except OSError as exc:
+                logger.warning("Failed to remove uploaded PDF {}: {}", path, exc)

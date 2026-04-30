@@ -175,3 +175,26 @@ class SQLiteDocumentStore:
             ).fetchall()
 
         return [dict(row) for row in rows]
+
+    def get_document(self, document_id: int) -> dict | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT
+                    d.id,
+                    d.source_name,
+                    d.status,
+                    d.created_at,
+                    d.updated_at,
+                    COUNT(c.id) AS chunk_count,
+                    MIN(c.page) AS first_page,
+                    MAX(c.page) AS last_page
+                FROM documents d
+                LEFT JOIN chunks c ON c.document_id = d.id
+                WHERE d.id = ?
+                GROUP BY d.id
+                """,
+                (document_id,),
+            ).fetchone()
+
+        return dict(row) if row else None

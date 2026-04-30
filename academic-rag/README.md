@@ -84,6 +84,8 @@ python main.py
 
 启动后访问：`http://localhost:8011/docs`
 
+前端工作台入口：`http://localhost:8011/`
+
 ### 5. 启动 RQ Worker
 
 另开一个终端，确保同样设置了 `DS_API_KEY`，然后运行：
@@ -125,6 +127,23 @@ curl http://localhost:8011/jobs/<job_id>
 ```bash
 curl http://localhost:8011/documents
 ```
+
+## 前端工作台
+
+项目内置一个轻量前端，不需要单独构建。启动 FastAPI 后访问：
+
+```text
+http://localhost:8011/
+```
+
+工作台包含：
+
+- 左侧：论文库、PDF 上传、索引任务状态、历史会话列表
+- 中间：气泡式问答历史，支持切换会话和 RAG/Agent 模式
+- 右侧：当前回答或检索命中的来源片段、论文名、页码、分数
+- 点击左侧论文卡片可在右侧预览对应 PDF；通过前端上传的 PDF 会保存在 `data/papers/`
+
+历史会话保存在浏览器 `localStorage`；请求仍使用后端现有的 `session_id`，不会影响已有 API。
 
 ## 问答 API
 
@@ -193,6 +212,14 @@ curl -X POST http://localhost:8011/memory/clear \
 curl -N -X POST http://localhost:8011/query/stream \
   -H "Content-Type: application/json" \
   -d '{"question": "总结这篇论文", "use_agent": false}'
+```
+
+### 只检索论文片段
+
+```bash
+curl -X POST http://localhost:8011/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "FedAvg 和 Local SGD 的区别", "top_k": 8, "score_threshold": 0}'
 ```
 
 ## 配置说明（与 `src/utils/config.py` 对齐）

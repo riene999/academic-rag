@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Academic RAG</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <section class="panel library-panel">
+          <div class="panel-header">
+            <div>
+              <h1>&#35770;&#25991;&#24211;</h1>
+              <p id="healthText">&#27491;&#22312;&#36830;&#25509;&#26381;&#21153;...</p>
+            </div>
+            <button class="icon-button" id="refreshDocumentsBtn" title="Refresh papers">R</button>
+          </div>
+
+          <label class="upload-zone" for="pdfInput">
+            <input id="pdfInput" type="file" accept="application/pdf" hidden />
+            <span>&#19978;&#20256; PDF</span>
+            <small>&#21518;&#21488;&#32034;&#24341;&#23436;&#25104;&#21518;&#33258;&#21160;&#21047;&#26032;</small>
+          </label>
+
+          <div class="job-list" id="jobList"></div>
+          <div class="document-list" id="documentList"></div>
+        </section>
+
+        <section class="panel sessions-panel">
+          <div class="panel-header compact">
+            <h2>&#21382;&#21490;&#23545;&#35805;</h2>
+            <button class="icon-button" id="newSessionBtn" title="New chat">+</button>
+          </div>
+          <div class="utility-actions">
+            <button id="clearCurrentChatBtn" type="button">Clear chat</button>
+            <button id="clearAllChatsBtn" type="button">Clear all</button>
+          </div>
+          <div class="session-list" id="sessionList"></div>
+        </section>
+      </aside>
+
+      <main class="chat-panel">
+        <header class="chat-header">
+          <div>
+            <h2 id="activeSessionTitle">&#26032;&#23545;&#35805;</h2>
+            <p id="activeSessionMeta">&#26412;&#22320;&#20445;&#23384;&#21382;&#21490;&#65292;&#21518;&#31471;&#25353; session_id &#35760;&#24518;&#19978;&#19979;&#25991;</p>
+          </div>
+          <label class="agent-toggle">
+            <input id="agentToggle" type="checkbox" />
+            <span>&#20351;&#29992; Agent</span>
+          </label>
+        </header>
+
+        <section class="messages" id="messages"></section>
+
+        <form class="composer" id="chatForm">
+          <textarea
+            id="questionInput"
+            rows="2"
+            placeholder="Ask uploaded papers, for example: compare FedAvg and Local SGD."
+          ></textarea>
+          <div class="composer-actions">
+            <label class="memory-toggle">
+              <input id="memoryToggle" type="checkbox" checked />
+              <span>&#35760;&#24518;</span>
+            </label>
+            <button id="sendBtn" type="submit">&#21457;&#36865;</button>
+          </div>
+        </form>
+      </main>
+
+      <aside class="sources-panel">
+        <section class="panel source-search">
+          <div class="panel-header compact">
+            <h2>&#35770;&#25991;&#26816;&#32034;</h2>
+          </div>
+          <form class="search-form" id="searchForm">
+            <input id="searchInput" type="search" placeholder="Search evidence only" />
+            <button type="submit">&#26816;&#32034;</button>
+          </form>
+        </section>
+
+        <section class="panel pdf-panel" id="pdfPanel">
+          <div class="panel-header compact">
+            <h2 id="pdfTitle">PDF &#38405;&#35272;</h2>
+            <button class="icon-button" id="closePdfBtn" title="Close PDF">x</button>
+          </div>
+          <div class="pdf-preview" id="pdfPreviewContent"></div>
+          <div class="pdf-actions">
+            <a id="pdfOpenLink" href="#" target="_blank" rel="noopener">Open PDF in browser</a>
+          </div>
+        </section>
+
+        <section class="panel source-list-panel">
+          <div class="panel-header compact">
+            <h2>&#26469;&#28304;&#29255;&#27573;</h2>
+            <span id="sourceCount">0</span>
+          </div>
+          <div class="source-list" id="sourceList"></div>
+        </section>
+      </aside>
+    </div>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

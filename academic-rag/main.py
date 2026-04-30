@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 import time
 from contextlib import asynccontextmanager
 from functools import partial
@@ -8,8 +9,10 @@ from typing import Optional
 from uuid import uuid4
 
 import uvicorn
+import PyPDF2
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from pydantic import BaseModel
 from redis.exceptions import RedisError
@@ -24,7 +27,10 @@ rag_pipeline: Optional[RAGPipeline] = None
 paper_agent: Optional[PaperAgent] = None
 index_mtime: Optional[float] = None
 
-UPLOAD_DIR = Path("data/uploads")
+BASE_DIR = Path(__file__).parent
+UPLOAD_DIR = BASE_DIR / "data" / "uploads"
+PAPER_DIR = BASE_DIR / "data" / "papers"
+PDF_SEARCH_DIRS = [PAPER_DIR, BASE_DIR / "pdf", UPLOAD_DIR]
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 
@@ -69,6 +75,12 @@ class AskRequest(BaseModel):
     case_id: Optional[str] = None
 
 
+class SearchRequest(BaseModel):
+    query: str
+    top_k: Optional[int] = None
+    score_threshold: Optional[float] = None
+
+
 class IndexJobResponse(BaseModel):
     job_id: str
     status: str
@@ -78,6 +90,15 @@ class IndexJobResponse(BaseModel):
 
 class ClearMemoryRequest(BaseModel):
     session_id: Optional[str] = None
+
+
+class DocumentPreviewResponse(BaseModel):
+    document_id: int
+    source_name: str
+    has_pdf: bool
+    pdf_url: Optional[str] = None
+    preview_type: str = "preview"
+    preview_text: str
 
 
 async def _run_sync(func, *args, **kwargs):
@@ -200,6 +221,105 @@ def _format_retrieved_chunk(chunk) -> dict:
     }
 
 
+def _resolve_pdf_path(source_name: str) -> Path | None:
+    filename = Path(source_name).name
+    if not filename.lower().endswith(".pdf"):
+        return None
+
+    for directory in PDF_SEARCH_DIRS:
+        candidate = directory / filename
+        if candidate.is_file():
+            return candidate.resolve()
+
+    for directory in PDF_SEARCH_DIRS:
+        if not directory.exists():
+            continue
+        for candidate in sorted(directory.iterdir()):
+            if candidate.is_file():
+                candidate_name = candidate.name
+                if candidate_name == filename or candidate_name.endswith(f"_{filename}"):
+                    return candidate.resolve()
+
+    return None
+
+
+def _document_with_pdf_url(document: dict) -> dict:
+    pdf_path = _resolve_pdf_path(str(document.get("source_name") or ""))
+    enriched = dict(document)
+    enriched["has_pdf"] = pdf_path is not None
+    enriched["pdf_url"] = f"/documents/{document['id']}/pdf" if pdf_path else None
+    return enriched
+
+
+def _read_pdf_pages_text(pdf_path: Path, max_pages: int = 3) -> str:
+    pages: list[str] = []
+    with pdf_path.open("rb") as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages[:max_pages]:
+            pages.append(page.extract_text() or "")
+    return "\n".join(pages)
+
+
+def _normalize_preview_text(text: str) -> str:
+    text = re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", text)
+    text = text.replace("\r", "\n")
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n[ \t]+", "\n", text)
+    text = re.sub(r"[ \t]+\n", "\n", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def _compact_preview_paragraph(text: str) -> str:
+    text = re.sub(r"\s*\n\s*", " ", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    return text.strip(" :-\n\t")
+
+
+def _extract_abstract_from_text(text: str) -> str:
+    normalized = _normalize_preview_text(text)
+    start_match = re.search(
+        r"(?im)(?:^|\n)\s*(?:abstract|摘要)\s*[:.\-]?\s*",
+        normalized,
+    )
+    if not start_match:
+        return ""
+
+    body = normalized[start_match.end():]
+    stop_match = re.search(
+        r"(?im)"
+        r"(?:^|\n)\s*(?:"
+        r"keywords?|index terms?|"
+        r"1\s*[\.\-]?\s*introduction|"
+        r"i\s*[\.\-]?\s*introduction|"
+        r"introduction|"
+        r"background|related work|"
+        r"摘要|关键词|引言"
+        r")\b",
+        body,
+    )
+    if stop_match:
+        body = body[: stop_match.start()]
+
+    abstract = _compact_preview_paragraph(body)
+    if len(abstract) < 80:
+        return ""
+    return abstract[:2500]
+
+
+FRONTEND_DIR = BASE_DIR / "frontend"
+if FRONTEND_DIR.exists():
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
+@app.get("/")
+async def web_app():
+    index_file = FRONTEND_DIR / "index.html"
+    if not index_file.exists():
+        raise HTTPException(status_code=404, detail="Frontend assets are not available")
+    return FileResponse(index_file)
+
+
 @app.get("/health")
 async def health_check():
     await _reload_index_if_changed()
@@ -224,10 +344,10 @@ async def upload_pdf(file: UploadFile = File(...)):
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="PDF 文件过大")
 
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    PAPER_DIR.mkdir(parents=True, exist_ok=True)
     job_id = uuid4().hex
     filename = Path(file.filename).name
-    pdf_path = UPLOAD_DIR / f"{job_id}_{filename}"
+    pdf_path = PAPER_DIR / filename
     pdf_path.write_bytes(content)
 
     try:
@@ -237,6 +357,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             pdf_path=str(pdf_path),
             source_name=filename,
             config_path="config.yaml",
+            delete_after=False,
         )
     except Exception as exc:
         pdf_path.unlink(missing_ok=True)
@@ -268,7 +389,81 @@ async def list_documents():
         raise HTTPException(status_code=503, detail="RAG pipeline is not initialized")
 
     await _reload_index_if_changed()
-    return {"documents": rag_pipeline.retriever.list_documents()}
+    documents = [
+        _document_with_pdf_url(document)
+        for document in rag_pipeline.retriever.list_documents()
+    ]
+    return {"documents": documents}
+
+
+@app.get("/documents/{document_id}/pdf")
+async def get_document_pdf(document_id: int):
+    if rag_pipeline is None:
+        raise HTTPException(status_code=503, detail="RAG pipeline is not initialized")
+    if not hasattr(rag_pipeline.retriever, "document_store"):
+        raise HTTPException(status_code=404, detail="Document store is not available")
+
+    document = rag_pipeline.retriever.document_store.get_document(document_id)
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    pdf_path = _resolve_pdf_path(str(document["source_name"]))
+    if pdf_path is None:
+        raise HTTPException(status_code=404, detail="PDF file is not available")
+
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename=Path(document["source_name"]).name,
+        content_disposition_type="inline",
+    )
+
+
+@app.get("/documents/{document_id}/preview", response_model=DocumentPreviewResponse)
+async def get_document_preview(document_id: int):
+    if rag_pipeline is None:
+        raise HTTPException(status_code=503, detail="RAG pipeline is not initialized")
+    if not hasattr(rag_pipeline.retriever, "document_store"):
+        raise HTTPException(status_code=404, detail="Document store is not available")
+
+    document = rag_pipeline.retriever.document_store.get_document(document_id)
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    source_name = str(document["source_name"])
+    pdf_path = _resolve_pdf_path(source_name)
+    pdf_url = f"/documents/{document_id}/pdf" if pdf_path else None
+    preview_text = ""
+    preview_type = "preview"
+
+    if pdf_path is not None:
+        try:
+            raw_text = _read_pdf_pages_text(pdf_path)
+            abstract = _extract_abstract_from_text(raw_text)
+            if abstract:
+                preview_text = abstract
+                preview_type = "abstract"
+            else:
+                preview_text = _normalize_preview_text(raw_text)[:6000]
+        except Exception as exc:
+            logger.warning("Failed to parse PDF preview {}: {}", pdf_path, exc)
+
+    if not preview_text:
+        preview_chunks = [
+            doc.content
+            for doc in getattr(rag_pipeline.retriever, "documents", [])
+            if (doc.metadata or {}).get("source") == source_name
+        ][:3]
+        preview_text = "\n\n".join(preview_chunks)
+
+    return DocumentPreviewResponse(
+        document_id=document_id,
+        source_name=source_name,
+        has_pdf=pdf_path is not None,
+        pdf_url=pdf_url,
+        preview_type=preview_type,
+        preview_text=preview_text[:6000],
+    )
 
 
 @app.post("/query", response_model=QueryResponse)
@@ -356,6 +551,25 @@ async def ask(request: AskRequest):
     }
 
 
+@app.post("/search")
+async def search_papers(request: SearchRequest):
+    if rag_pipeline is None:
+        raise HTTPException(status_code=503, detail="RAG pipeline is not initialized")
+
+    await _reload_index_if_changed()
+    chunks = await _run_with_faiss_lock(
+        rag_pipeline.retrieve_chunks,
+        request.query,
+        top_k=request.top_k,
+        score_threshold=request.score_threshold,
+        use_reranker=True,
+    )
+    return {
+        "query": request.query,
+        "retrieved_chunks": [_format_retrieved_chunk(chunk) for chunk in chunks],
+    }
+
+
 @app.post("/memory/clear")
 async def clear_memory(request: ClearMemoryRequest):
     if not paper_agent:
@@ -393,7 +607,15 @@ async def query_stream(request: QueryRequest):
 
     def generate():
         sources = [
-            {"source": c.document.metadata.get("source"), "score": round(c.score, 4)}
+            {
+                "source": c.document.metadata.get("source"),
+                "page": c.document.metadata.get("page"),
+                "score": round(c.score, 4),
+                "chunk_id": c.document.chunk_id,
+                "content_preview": c.document.content[:220] + (
+                    "..." if len(c.document.content) > 220 else ""
+                ),
+            }
             for c in chunks
         ]
         yield f"data: {json.dumps({'type': 'sources', 'data': sources}, ensure_ascii=False)}\n\n"
