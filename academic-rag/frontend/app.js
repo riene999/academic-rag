@@ -6,6 +6,7 @@ const state = {
   activeSources: [],
   jobs: new Map(),
   documents: [],
+  selectedSources: [],
 };
 
 const els = {
@@ -21,6 +22,9 @@ const els = {
   activeSessionTitle: document.querySelector("#activeSessionTitle"),
   activeSessionMeta: document.querySelector("#activeSessionMeta"),
   agentToggle: document.querySelector("#agentToggle"),
+  scopeBar: document.querySelector("#scopeBar"),
+  scopeText: document.querySelector("#scopeText"),
+  clearScopeBtn: document.querySelector("#clearScopeBtn"),
   messages: document.querySelector("#messages"),
   chatForm: document.querySelector("#chatForm"),
   questionInput: document.querySelector("#questionInput"),
@@ -103,6 +107,19 @@ function renderAll() {
   renderSessions();
   renderMessages();
   renderSources(state.activeSources);
+  renderScope();
+}
+
+function renderScope() {
+  if (state.selectedSources.length === 0) {
+    els.scopeText.textContent = "Scope: all papers";
+    els.clearScopeBtn.style.display = "none";
+    return;
+  }
+  const doc = state.documents.find((item) => item.source_name === state.selectedSources[0]);
+  const label = doc?.paper_title || doc?.source_name || state.selectedSources[0];
+  els.scopeText.textContent = `Scope: ${label}`;
+  els.clearScopeBtn.style.display = "inline-block";
 }
 
 function renderSessions() {
@@ -166,10 +183,12 @@ function renderDocuments(documents = []) {
     button.className = "document-card document-button";
     button.type = "button";
     const pages = doc.first_page && doc.last_page ? ` - pages ${doc.first_page}-${doc.last_page}` : "";
-    const pdfText = doc.has_pdf ? "Click for preview" : "Original PDF not found";
+    const title = doc.paper_title || doc.source_name || "unknown";
+    const pdfText = doc.has_pdf ? "Click for preview and scoped chat" : "Click to scope chat";
     button.innerHTML = `
-      <strong>${escapeHtml(doc.source_name || "unknown")}</strong>
+      <strong>${escapeHtml(title)}</strong>
       <div class="meta-line">${doc.chunk_count || 0} chunks${pages}</div>
+      <div class="meta-line">${escapeHtml(doc.source_name || "")}</div>
       <div class="meta-line">${pdfText} - ${formatDate(doc.created_at)}</div>
     `;
     button.addEventListener("click", () => openDocumentPreview(doc));
@@ -178,6 +197,8 @@ function renderDocuments(documents = []) {
 }
 
 async function openDocumentPreview(doc) {
+  state.selectedSources = [doc.source_name];
+  renderScope();
   document.querySelector(".sources-panel")?.classList.add("pdf-open");
   els.pdfPanel.classList.add("visible");
   els.pdfTitle.textContent = doc.source_name || "Paper preview";
@@ -350,11 +371,12 @@ async function streamQuery(question, sessionId, assistantMessage) {
   const response = await fetch("/query/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+      body: JSON.stringify({
       question,
       session_id: sessionId,
       use_agent: els.agentToggle.checked,
       use_memory: els.memoryToggle.checked,
+      source_names: state.selectedSources,
     }),
   });
 
@@ -405,7 +427,12 @@ async function fetchSourcesFallback(query) {
   const response = await fetch("/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, top_k: 8, score_threshold: 0 }),
+    body: JSON.stringify({
+      query,
+      top_k: 8,
+      score_threshold: 0,
+      source_names: state.selectedSources,
+    }),
   });
   const payload = await response.json();
   if (!response.ok) return [];
@@ -476,6 +503,10 @@ els.pdfInput.addEventListener("change", async (event) => {
 
 els.newSessionBtn.addEventListener("click", () => createSession(true));
 els.closePdfBtn.addEventListener("click", closePdf);
+els.clearScopeBtn.addEventListener("click", () => {
+  state.selectedSources = [];
+  renderScope();
+});
 els.clearCurrentChatBtn.addEventListener("click", async () => {
   try {
     await clearCurrentChat();

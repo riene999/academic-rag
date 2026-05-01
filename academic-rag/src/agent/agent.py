@@ -154,6 +154,7 @@ class PaperAgent:
         max_iterations: int = 5,
         session_id: str = "default",
         use_memory: bool = True,
+        source_names: list[str] | None = None,
     ) -> str:
         """
         ReAct Agent主循环
@@ -192,7 +193,8 @@ class PaperAgent:
             for tool_call in message.tool_calls:
                 tool_result = self._execute_tool(
                     tool_call.function.name,
-                    json.loads(tool_call.function.arguments)
+                    json.loads(tool_call.function.arguments),
+                    source_names=source_names,
                 )
                 messages.append({
                     "role": "tool",
@@ -216,14 +218,23 @@ class PaperAgent:
         """清空指定会话或全部会话记忆。"""
         self.memory.clear(session_id)
 
-    def _execute_tool(self, tool_name: str, args: Dict[str, Any]) -> str:
+    def _execute_tool(
+        self,
+        tool_name: str,
+        args: Dict[str, Any],
+        source_names: list[str] | None = None,
+    ) -> str:
         """执行工具调用，返回结果字符串"""
         logger.info(f"调用工具: {tool_name}, 参数: {args}")
 
         if tool_name == "search_papers":
             query = args["query"]
             top_k = args.get("top_k", 3)
-            chunks = self.rag.retrieve_chunks(query, top_k=top_k)
+            chunks = self.rag.retrieve_chunks(
+                query,
+                top_k=top_k,
+                source_filter=source_names,
+            )
 
             if not chunks:
                 return "未找到相关内容"
@@ -244,7 +255,7 @@ class PaperAgent:
                 "conclusion": "结论 总结 贡献 未来工作",
             }
             query = aspect_queries.get(aspect, aspect)
-            chunks = self.rag.retrieve_chunks(query, top_k=3)
+            chunks = self.rag.retrieve_chunks(query, top_k=3, source_filter=source_names)
 
             if not chunks:
                 return f"未找到关于{aspect}的相关内容"

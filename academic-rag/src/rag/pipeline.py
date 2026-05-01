@@ -66,12 +66,14 @@ class RAGPipeline:
         top_k: int | None = None,
         score_threshold: float | None = None,
         use_reranker: bool = True,
+        source_filter: List[str] | None = None,
     ) -> List[RetrievedChunk]:
         return self._retrieve_chunks_with_optional_decomposition(
             question=question,
             top_k=top_k,
             score_threshold=score_threshold,
             use_reranker=use_reranker,
+            source_filter=source_filter,
         )
 
     def _retrieve_chunks_single(
@@ -80,6 +82,7 @@ class RAGPipeline:
         top_k: int,
         score_threshold: float,
         use_reranker: bool,
+        source_filter: List[str] | None = None,
     ) -> List[RetrievedChunk]:
         retrieve_k = top_k
         if self.reranker and use_reranker:
@@ -89,11 +92,13 @@ class RAGPipeline:
             query=question,
             top_k=retrieve_k,
             score_threshold=score_threshold,
+            source_filter=source_filter,
         )
         chunks = self._hybrid_retrieve(
             question=question,
             dense_chunks=dense_chunks,
             retrieve_k=retrieve_k,
+            source_filter=source_filter,
         )
         if not (self.reranker and use_reranker):
             return chunks[:top_k]
@@ -111,6 +116,7 @@ class RAGPipeline:
         question: str,
         dense_chunks: List[RetrievedChunk],
         retrieve_k: int,
+        source_filter: List[str] | None = None,
     ) -> List[RetrievedChunk]:
         if self.bm25_retriever is None:
             return dense_chunks
@@ -119,6 +125,13 @@ class RAGPipeline:
             query=question,
             top_k=max(retrieve_k, self.config.bm25.top_k),
         )
+        if source_filter:
+            source_set = set(source_filter)
+            sparse_chunks = [
+                chunk
+                for chunk in sparse_chunks
+                if (chunk.document.metadata or {}).get("source") in source_set
+            ]
         if not sparse_chunks:
             return dense_chunks
 
@@ -180,6 +193,7 @@ class RAGPipeline:
         top_k: int | None,
         score_threshold: float | None,
         use_reranker: bool,
+        source_filter: List[str] | None = None,
     ) -> List[RetrievedChunk]:
         final_top_k = top_k if top_k is not None else self.config.retrieval.top_k
         threshold = (
@@ -195,6 +209,7 @@ class RAGPipeline:
                 top_k=final_top_k,
                 score_threshold=threshold,
                 use_reranker=use_reranker,
+                source_filter=source_filter,
             )
 
         sub_questions = self.generator.decompose_query(
@@ -207,6 +222,7 @@ class RAGPipeline:
                 top_k=final_top_k,
                 score_threshold=threshold,
                 use_reranker=use_reranker,
+                source_filter=source_filter,
             )
 
         logger.info("Complex query detected, sub-questions={}", len(sub_questions))
@@ -217,6 +233,7 @@ class RAGPipeline:
                 top_k=final_top_k,
                 score_threshold=threshold,
                 use_reranker=False,  # Rerank once on merged set by original question.
+                source_filter=source_filter,
             )
             all_chunks.extend(sub_chunks)
 
@@ -233,14 +250,19 @@ class RAGPipeline:
             return reranked
         return merged[:final_top_k]
 
-    def query(self, question: str, top_k: int | None = None) -> RAGResponse:
+    def query(
+        self,
+        question: str,
+        top_k: int | None = None,
+        source_filter: List[str] | None = None,
+    ) -> RAGResponse:
         logger.info("Received query: {}...", question[:50])
-        chunks = self.retrieve_chunks(question, top_k=top_k)
+        chunks = self.retrieve_chunks(question, top_k=top_k, source_filter=source_filter)
         answer = self.generator.generate(question, chunks)
         return RAGResponse(answer=answer, retrieved_chunks=chunks, query=question)
 
-    def query_stream(self, question: str):
-        chunks = self.retrieve_chunks(question)
+    def query_stream(self, question: str, source_filter: List[str] | None = None):
+        chunks = self.retrieve_chunks(question, source_filter=source_filter)
         return chunks, self.generator.generate_stream(question, chunks)
 
     def index_documents_from_pdf(self, pdf_path: str, source_name: str | None = None) -> int:

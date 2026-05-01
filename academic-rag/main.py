@@ -21,6 +21,7 @@ from src.agent.agent import PaperAgent
 from src.jobs.indexing import enqueue_pdf_index_job, get_index_queue, make_redis_connection
 from src.rag.pipeline import RAGPipeline, RAGResponse
 from src.shared.context import create_pipeline
+from src.utils.pdf_parser import extract_paper_title, normalize_title
 
 
 rag_pipeline: Optional[RAGPipeline] = None
@@ -59,6 +60,7 @@ class QueryRequest(BaseModel):
     use_agent: bool = False
     session_id: str = "default"
     use_memory: bool = True
+    source_names: Optional[list[str]] = None
 
 
 class QueryResponse(BaseModel):
@@ -73,12 +75,14 @@ class AskRequest(BaseModel):
     stream: bool = False
     top_k: Optional[int] = None
     case_id: Optional[str] = None
+    source_names: Optional[list[str]] = None
 
 
 class SearchRequest(BaseModel):
     query: str
     top_k: Optional[int] = None
     score_threshold: Optional[float] = None
+    source_names: Optional[list[str]] = None
 
 
 class IndexJobResponse(BaseModel):
@@ -216,9 +220,57 @@ def _format_retrieved_chunk(chunk) -> dict:
         "score": round(float(chunk.score), 6),
         "rank": chunk.rank,
         "source": metadata.get("source"),
+        "paper_title": metadata.get("paper_title"),
         "page": metadata.get("page"),
         "metadata": metadata,
     }
+
+
+def _clean_source_filter(source_names: Optional[list[str]]) -> list[str] | None:
+    if not source_names:
+        return None
+    cleaned = []
+    for item in source_names:
+        source = Path(str(item)).name
+        if source and source not in cleaned:
+            cleaned.append(source)
+    return cleaned or None
+
+
+def _resolve_source_filter(question: str, source_names: Optional[list[str]]) -> list[str] | None:
+    explicit = _clean_source_filter(source_names)
+    if explicit:
+        return explicit
+    return _infer_source_filter_from_question(question)
+
+
+def _infer_source_filter_from_question(question: str) -> list[str] | None:
+    if rag_pipeline is None or not hasattr(rag_pipeline.retriever, "list_documents"):
+        return None
+
+    normalized_question = normalize_title(question)
+    if len(normalized_question) < 8:
+        return None
+
+    matches = []
+    for document in rag_pipeline.retriever.list_documents():
+        source_name = str(document.get("source_name") or "")
+        paper_title = str(document.get("paper_title") or Path(source_name).stem)
+        keys = {
+            normalize_title(source_name),
+            normalize_title(paper_title),
+        }
+        for key in keys:
+            if len(key) >= 12 and (key in normalized_question or normalized_question in key):
+                matches.append(source_name)
+                break
+
+    unique_matches = []
+    for match in matches:
+        if match not in unique_matches:
+            unique_matches.append(match)
+
+    return unique_matches or None
 
 
 def _resolve_pdf_path(source_name: str) -> Path | None:
@@ -246,9 +298,29 @@ def _resolve_pdf_path(source_name: str) -> Path | None:
 def _document_with_pdf_url(document: dict) -> dict:
     pdf_path = _resolve_pdf_path(str(document.get("source_name") or ""))
     enriched = dict(document)
+    if not enriched.get("paper_title"):
+        paper_title = None
+        if pdf_path is not None:
+            paper_title = _extract_title_from_pdf_file(pdf_path, str(enriched["source_name"]))
+            if paper_title and rag_pipeline is not None and hasattr(rag_pipeline.retriever, "document_store"):
+                rag_pipeline.retriever.document_store.update_document_title(
+                    int(enriched["id"]),
+                    paper_title,
+                )
+        enriched["paper_title"] = paper_title or Path(str(enriched.get("source_name") or "")).stem
     enriched["has_pdf"] = pdf_path is not None
     enriched["pdf_url"] = f"/documents/{document['id']}/pdf" if pdf_path else None
     return enriched
+
+
+def _extract_title_from_pdf_file(pdf_path: Path, fallback: str) -> str | None:
+    try:
+        with pdf_path.open("rb") as file:
+            reader = PyPDF2.PdfReader(file)
+            return extract_paper_title(reader, fallback=fallback)
+    except Exception as exc:
+        logger.warning("Failed to extract paper title from {}: {}", pdf_path, exc)
+        return None
 
 
 def _read_pdf_pages_text(pdf_path: Path, max_pages: int = 3) -> str:
@@ -469,6 +541,7 @@ async def get_document_preview(document_id: int):
 @app.post("/query", response_model=QueryResponse)
 async def query(request: QueryRequest):
     await _reload_index_if_changed()
+    source_filter = _resolve_source_filter(request.question, request.source_names)
 
     if request.use_agent:
         answer = await _run_with_faiss_lock(
@@ -476,6 +549,7 @@ async def query(request: QueryRequest):
             request.question,
             session_id=request.session_id,
             use_memory=request.use_memory,
+            source_names=source_filter,
         )
         return QueryResponse(
             answer=answer,
@@ -489,7 +563,11 @@ async def query(request: QueryRequest):
         request.session_id,
         request.use_memory,
     )
-    chunks = await _run_with_faiss_lock(rag_pipeline.retrieve_chunks, effective_question)
+    chunks = await _run_with_faiss_lock(
+        rag_pipeline.retrieve_chunks,
+        effective_question,
+        source_filter=source_filter,
+    )
     answer = await _run_sync(rag_pipeline.generator.generate, effective_question, chunks)
     response = RAGResponse(answer=answer, retrieved_chunks=chunks, query=effective_question)
     _remember_turn(request.session_id, request.question, response.answer, request.use_memory)
@@ -518,11 +596,13 @@ async def ask(request: AskRequest):
         logger.info("/ask received stream=true; returning non-streaming JSON for eval compatibility")
 
     await _reload_index_if_changed()
+    source_filter = _resolve_source_filter(request.question, request.source_names)
     start = time.perf_counter()
     chunks = await _run_with_faiss_lock(
         rag_pipeline.retrieve_chunks,
         request.question,
         top_k=request.top_k,
+        source_filter=source_filter,
     )
     answer = await _run_sync(rag_pipeline.generator.generate, request.question, chunks)
     response = RAGResponse(answer=answer, retrieved_chunks=chunks, query=request.question)
@@ -557,12 +637,14 @@ async def search_papers(request: SearchRequest):
         raise HTTPException(status_code=503, detail="RAG pipeline is not initialized")
 
     await _reload_index_if_changed()
+    source_filter = _resolve_source_filter(request.query, request.source_names)
     chunks = await _run_with_faiss_lock(
         rag_pipeline.retrieve_chunks,
         request.query,
         top_k=request.top_k,
         score_threshold=request.score_threshold,
         use_reranker=True,
+        source_filter=source_filter,
     )
     return {
         "query": request.query,
@@ -581,6 +663,7 @@ async def clear_memory(request: ClearMemoryRequest):
 @app.post("/query/stream")
 async def query_stream(request: QueryRequest):
     await _reload_index_if_changed()
+    source_filter = _resolve_source_filter(request.question, request.source_names)
 
     if request.use_agent:
         answer = await _run_with_faiss_lock(
@@ -588,6 +671,7 @@ async def query_stream(request: QueryRequest):
             request.question,
             session_id=request.session_id,
             use_memory=request.use_memory,
+            source_names=source_filter,
         )
 
         def generate_agent():
@@ -602,7 +686,11 @@ async def query_stream(request: QueryRequest):
         request.session_id,
         request.use_memory,
     )
-    chunks = await _run_with_faiss_lock(rag_pipeline.retrieve_chunks, effective_question)
+    chunks = await _run_with_faiss_lock(
+        rag_pipeline.retrieve_chunks,
+        effective_question,
+        source_filter=source_filter,
+    )
     stream = rag_pipeline.generator.generate_stream(effective_question, chunks)
 
     def generate():

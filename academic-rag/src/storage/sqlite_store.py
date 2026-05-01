@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Iterable, List
 
 from src.utils.pdf_parser import Document
+from src.utils.pdf_parser import normalize_title
 
 
 class SQLiteDocumentStore:
@@ -27,6 +28,8 @@ class SQLiteDocumentStore:
                 CREATE TABLE IF NOT EXISTS documents (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     source_name TEXT NOT NULL,
+                    paper_title TEXT,
+                    title_normalized TEXT,
                     status TEXT NOT NULL DEFAULT 'active',
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -65,6 +68,25 @@ class SQLiteDocumentStore:
             connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_chunks_source_page ON chunks(page, chunk_index)"
             )
+            self._ensure_column(connection, "documents", "paper_title", "TEXT")
+            self._ensure_column(connection, "documents", "title_normalized", "TEXT")
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_documents_title_normalized ON documents(title_normalized)"
+            )
+
+    def _ensure_column(
+        self,
+        connection: sqlite3.Connection,
+        table: str,
+        column: str,
+        column_type: str,
+    ) -> None:
+        columns = {
+            row["name"]
+            for row in connection.execute(f"PRAGMA table_info({table})").fetchall()
+        }
+        if column not in columns:
+            connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {column_type}")
 
     def has_chunks(self) -> bool:
         with self._connect() as connection:
@@ -81,11 +103,21 @@ class SQLiteDocumentStore:
             source_to_document_id: dict[str, int] = {}
             for vector_index, doc in enumerate(docs):
                 source_name = str(doc.metadata.get("source") or "unknown")
+                paper_title = str(doc.metadata.get("paper_title") or Path(source_name).stem)
+                title_normalized = normalize_title(paper_title)
                 document_id = source_to_document_id.get(source_name)
                 if document_id is None:
                     cursor = connection.execute(
-                        "INSERT INTO documents (source_name, status) VALUES (?, 'active')",
-                        (source_name,),
+                        """
+                        INSERT INTO documents (
+                            source_name,
+                            paper_title,
+                            title_normalized,
+                            status
+                        )
+                        VALUES (?, ?, ?, 'active')
+                        """,
+                        (source_name, paper_title, title_normalized),
                     )
                     document_id = int(cursor.lastrowid)
                     source_to_document_id[source_name] = document_id
@@ -161,6 +193,8 @@ class SQLiteDocumentStore:
                 SELECT
                     d.id,
                     d.source_name,
+                    d.paper_title,
+                    d.title_normalized,
                     d.status,
                     d.created_at,
                     d.updated_at,
@@ -183,6 +217,8 @@ class SQLiteDocumentStore:
                 SELECT
                     d.id,
                     d.source_name,
+                    d.paper_title,
+                    d.title_normalized,
                     d.status,
                     d.created_at,
                     d.updated_at,
@@ -198,3 +234,14 @@ class SQLiteDocumentStore:
             ).fetchone()
 
         return dict(row) if row else None
+
+    def update_document_title(self, document_id: int, paper_title: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE documents
+                SET paper_title = ?, title_normalized = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (paper_title, normalize_title(paper_title), document_id),
+            )

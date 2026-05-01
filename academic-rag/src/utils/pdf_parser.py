@@ -1,7 +1,8 @@
 import re
-from pathlib import Path
-from typing import List, Dict
+import unicodedata
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List
 
 import PyPDF2
 from loguru import logger
@@ -9,9 +10,9 @@ from loguru import logger
 
 @dataclass
 class Document:
-    content: str          # 文本内容
-    metadata: Dict        # 元信息：来源文件、页码、chunk_id等
-    chunk_id: str         # 唯一标识
+    content: str
+    metadata: Dict
+    chunk_id: str
 
 
 class PDFParser:
@@ -22,14 +23,17 @@ class PDFParser:
     def parse_pdf(self, pdf_path: str, source_name: str = None) -> List[Document]:
         path = Path(pdf_path)
         if not path.exists():
-            raise FileNotFoundError(f"PDF文件不存在: {pdf_path}")
+            raise FileNotFoundError(f"PDF file does not exist: {pdf_path}")
 
-        logger.info(f"解析PDF: {path.name}")
+        logger.info("Parsing PDF: {}", path.name)
         full_text = ""
-        page_map = []  # 记录每个字符对应的页码，用于元信息
+        page_map = []
+        source = source_name or path.name
+        paper_title = Path(source).stem
 
-        with open(pdf_path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
+        with open(pdf_path, "rb") as file:
+            reader = PyPDF2.PdfReader(file)
+            paper_title = extract_paper_title(reader, fallback=source)
             for page_num, page in enumerate(reader.pages):
                 text = page.extract_text() or ""
                 text = self._clean_text(text)
@@ -39,24 +43,24 @@ class PDFParser:
 
         chunks = self._split_text(full_text)
         documents = []
-
-        for i, chunk in enumerate(chunks):
-            # 找到chunk对应的页码
-            chunk_start = full_text.find(chunk[:50])  # 用前50字符定位
+        for idx, chunk in enumerate(chunks):
+            chunk_start = full_text.find(chunk[:50])
             page_num = self._find_page(chunk_start, page_map)
+            documents.append(
+                Document(
+                    content=chunk,
+                    metadata={
+                        "source": source,
+                        "paper_title": paper_title,
+                        "page": page_num,
+                        "chunk_index": idx,
+                        "total_chunks": len(chunks),
+                    },
+                    chunk_id=f"{path.stem}_chunk_{idx}",
+                )
+            )
 
-            documents.append(Document(
-                content=chunk,
-                metadata={
-                    "source": source_name or path.name,
-                    "page": page_num,
-                    "chunk_index": i,
-                    "total_chunks": len(chunks),
-                },
-                chunk_id=f"{path.stem}_chunk_{i}",
-            ))
-
-        logger.info(f"解析完成：{len(documents)} 个chunks")
+        logger.info("Parsed {} chunks from {}", len(documents), path.name)
         return documents
 
     def parse_text(self, text: str, source_name: str = "manual_input") -> List[Document]:
@@ -64,18 +68,18 @@ class PDFParser:
         return [
             Document(
                 content=chunk,
-                metadata={"source": source_name, "chunk_index": i},
-                chunk_id=f"{source_name}_chunk_{i}",
+                metadata={
+                    "source": source_name,
+                    "paper_title": source_name,
+                    "chunk_index": idx,
+                },
+                chunk_id=f"{source_name}_chunk_{idx}",
             )
-            for i, chunk in enumerate(chunks)
+            for idx, chunk in enumerate(chunks)
         ]
 
     def _split_text(self, text: str) -> List[str]:
-        # 递归字符分割策略（参考LangChain RecursiveCharacterTextSplitter）
-        # 优先按段落切，其次按句子切，最后按字符切
-        # 保证每个chunk不超过chunk_size，相邻chunk有chunk_overlap重叠
-
-        text = re.sub(r'\n{3,}', '\n\n', text).strip()
+        text = re.sub(r"\n{3,}", "\n\n", text).strip()
         if not text:
             return []
 
@@ -83,42 +87,43 @@ class PDFParser:
             return [text]
 
         chunks = []
-        # 按段落优先分割
-        separators = ["\n\n", "\n", "。", "！", "？", ".", "!", "?", " ", ""]
+        separators = ["\n\n", "\n", "。", "；", "，", ".", "!", "?", " ", ""]
 
         for sep in separators:
-            if sep in text:
+            if sep and sep not in text:
+                continue
+            if sep:
                 parts = text.split(sep)
                 current_chunk = ""
                 for part in parts:
-                    if len(current_chunk) + len(part) + len(sep) <= self.chunk_size:
-                        current_chunk += part + sep
+                    addition = part + sep
+                    if len(current_chunk) + len(addition) <= self.chunk_size:
+                        current_chunk += addition
                     else:
                         if current_chunk.strip():
                             chunks.append(current_chunk.strip())
-                        current_chunk = part + sep
+                        current_chunk = addition
                 if current_chunk.strip():
                     chunks.append(current_chunk.strip())
-                break
+            else:
+                step = max(1, self.chunk_size - self.chunk_overlap)
+                for idx in range(0, len(text), step):
+                    chunks.append(text[idx : idx + self.chunk_size])
+            break
 
-        if not chunks:
-            # 兜底：强制按长度切
-            for i in range(0, len(text), self.chunk_size - self.chunk_overlap):
-                chunks.append(text[i:i + self.chunk_size])
-
-        # 添加overlap：每个chunk的开头加上上一个chunk的末尾
         if self.chunk_overlap > 0 and len(chunks) > 1:
             overlapped = [chunks[0]]
-            for i in range(1, len(chunks)):
-                overlap_text = chunks[i-1][-self.chunk_overlap:]
-                overlapped.append(overlap_text + chunks[i])
+            for idx in range(1, len(chunks)):
+                overlap_text = chunks[idx - 1][-self.chunk_overlap :]
+                overlapped.append(overlap_text + chunks[idx])
             return overlapped
 
         return chunks
 
     def _clean_text(self, text: str) -> str:
-        text = re.sub(r'\s+', ' ', text)          # 合并多余空白
-        text = re.sub(r'(\w)-\n(\w)', r'\1\2', text)  # 修复断行连字符
+        text = re.sub(r"(\w)-\n(\w)", r"\1\2", text)
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()
 
     def _find_page(self, char_pos: int, page_map: List) -> int:
@@ -126,3 +131,83 @@ class PDFParser:
             if start <= char_pos < end:
                 return page
         return 1
+
+
+def normalize_title(value: str) -> str:
+    value = unicodedata.normalize("NFKC", Path(value or "").stem).lower()
+    value = re.sub(r"[_\-]+", " ", value)
+    value = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", " ", value)
+    value = re.sub(r"\s+", " ", value)
+    return value.strip()
+
+
+def extract_paper_title(reader: PyPDF2.PdfReader, fallback: str) -> str:
+    metadata_title = ""
+    try:
+        metadata_title = str(getattr(reader.metadata, "title", "") or "").strip()
+    except Exception:
+        metadata_title = ""
+
+    if _looks_like_title(metadata_title):
+        return unicodedata.normalize("NFKC", metadata_title)
+
+    first_page_text = ""
+    try:
+        if reader.pages:
+            first_page_text = reader.pages[0].extract_text() or ""
+    except Exception:
+        first_page_text = ""
+
+    title = _extract_title_from_first_page(first_page_text)
+    if title:
+        return unicodedata.normalize("NFKC", title)
+    return unicodedata.normalize("NFKC", Path(fallback).stem)
+
+
+def _extract_title_from_first_page(text: str) -> str:
+    if not text:
+        return ""
+
+    text = re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", text)
+    lines = [re.sub(r"\s+", " ", line).strip() for line in text.splitlines()]
+    lines = [line for line in lines if line]
+    if not lines:
+        return ""
+
+    abstract_idx = next(
+        (
+            idx
+            for idx, line in enumerate(lines)
+            if re.fullmatch(r"(?i)\s*abstract\s*[:.\-]?\s*", line)
+            or re.match(r"(?i)\s*abstract\s*[:.\-]\s+", line)
+        ),
+        min(len(lines), 14),
+    )
+    candidates = [
+        line
+        for line in lines[:abstract_idx]
+        if _looks_like_title(line)
+        and not re.search(
+            r"(?i)(arxiv|proceedings|conference|workshop|university|@|copyright|doi)",
+            line,
+        )
+    ]
+    if not candidates:
+        return ""
+
+    joined = []
+    for line in candidates[:3]:
+        joined.append(line)
+        title = " ".join(joined)
+        if len(title) >= 30:
+            return title[:240]
+    return " ".join(joined)[:240]
+
+
+def _looks_like_title(value: str) -> bool:
+    value = re.sub(r"\s+", " ", value or "").strip()
+    if len(value) < 12 or len(value) > 260:
+        return False
+    if re.search(r"@|https?://|doi\.org", value, re.I):
+        return False
+    return len(value.split()) >= 3
